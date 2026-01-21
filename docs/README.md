@@ -1,6 +1,6 @@
-# Forg
+# Haruko
 
-Rolling Waves Republic Humble Assistant.
+The Server Humble Assistant.
 
 ## Discord intents and permissions
 
