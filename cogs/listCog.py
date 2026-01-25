@@ -1,7 +1,10 @@
+import io
+
 from typing import Literal
 import discord
 import discord.ext
 import discord.ext.commands
+import discord.file
 
 import constants
 import database
@@ -248,13 +251,60 @@ class ListCog(CustomCog):
 
     con.commit()
 
+    database.ConnectionPool.release(con)
+
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_detail")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
   async def list_detail(self, interaction : discord.Interaction, list_name : str):
     return await self.__list_detail(interaction, list_name)
-  
+
+  @discord.app_commands.command(name="list_export")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  async def list_export(self, interaction : discord.Interaction, list_name : str, format : Literal["csv"] = "csv"):
+    em = discord.Embed(title="", description="")
+    
+    list_name = self.__sanitize_list_name(list_name)
+    
+    # serach list by name
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    # get list info
+    sql = "SELECT * FROM lists WHERE id = ?;"
+
+    cur.execute(sql, [list_id])
+
+    list = TList().set_from_record(cur.fetchone())
+
+    # get list items info
+    sql = "SELECT * FROM list_items WHERE list_id = ? ORDER BY position;"
+
+    cur.execute(sql, [list_id])
+
+    rows = cur.fetchall()
+
+    content = "\"position\",\"content\""
+    
+    if rows != None:
+      for row in rows:
+        item = TListItem().set_from_record(row)
+        content += f"\n{item.position},\"{item.content}\""
+
+    # create file
+    file = discord.file.File(io.StringIO(content))
+    
+    file.filename = f"{list_name}.{format}"
+
+    return await interaction.response.send_message(file=file, ephemeral=list.is_public==False)
+
   @discord.app_commands.command(name="item_add")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
   async def item_add(self, interaction : discord.Interaction, list_name : str, item_content : str):
