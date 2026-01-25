@@ -144,7 +144,7 @@ class WordCounterCog(CustomCog):
             em.description = "\n".join(scan_logs)
             await interaction.followup.edit_message(message_id=interaction_message.id, embed=em)
 
-            guild_channels = interaction.guild.text_channels
+            guild_channels = interaction.guild.text_channels + interaction.guild.voice_channels
 
             scan_logs[-1] = f"fetching channels... {len(guild_channels)} found"
             em.description = "\n".join(scan_logs)
@@ -429,19 +429,19 @@ class WordCounterCog(CustomCog):
 
     @discord.app_commands.command(name="wordquote")
     @discord.app_commands.describe(word="the word to look for", member="the member to look for (optional), if none the quote is from a random member")
-    @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID)
+    @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, constants.THE_SERVER_GUILD_ID)
     async def wordquote(self, interaction : discord.Interaction, word : str, member : Optional[discord.Member] = None):
        return await self.__wordquote(interaction, word.split(","), member)
 
     @discord.app_commands.command(name="wordcount", description="counts how many times a word was mention")
     @discord.app_commands.describe(word="the word to look for", member="the memeber to look mentions for (optional), if none the count is global")
-    @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID)
+    @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, constants.THE_SERVER_GUILD_ID)
     async def wordcount(self, interaction : discord.Interaction, word : str, member : Optional[discord.Member] = None):
         return await self.__wordcount(interaction, word.split(","), member)
 
     @discord.app_commands.command(name="wordtop")
     @discord.app_commands.describe(word="the word to look for (optional), if none the command retrieves the top words mention")
-    @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID)
+    @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, )
     async def wordtop(self, interaction : discord.Interaction, word : str = None):
         if word == None:
             word_list = []

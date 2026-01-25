@@ -41,7 +41,23 @@ CREATE TABLE transactions (
   amount REAL,
   timestamp TEXT
 );
+CREATE TABLE lists (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  discord_user_id INTEGER,
+  discord_guild_id INTEGER,
+  name TEXT,
+  is_public INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE list_items(
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  list_id INTEGER NOT NULL,
+  content TEXT,
+  score INTEGER,
+  position INTEGER,
+  FOREIGN KEY (list_id) REFERENCES lists(id)
+);
 -- Dbmate schema migrations
 INSERT INTO "migrations" (version) VALUES
   ('20250717070747'),
-  ('20250727203847');
+  ('20250727203847'),
+  ('20260125032850');

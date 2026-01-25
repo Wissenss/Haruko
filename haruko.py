@@ -14,10 +14,11 @@ class Forg(commands.Bot):
         database.ConnectionPool.finish()
         await super().close()
 
-# this is the enty point of the bot
+# this is the entry point of the bot
 
 intents =  discord.Intents.default()
 intents.message_content = True
+intents.messages = True
 intents.members = True
 
 bot = Forg(command_prefix="!", intents=intents)
@@ -35,9 +36,10 @@ async def setup_hook():
     await bot.load_extension("cogs.wordCounterCog")
     await bot.load_extension("cogs.triviaCog")
     await bot.load_extension("cogs.economyCog")
+    await bot.load_extension("cogs.listCog")
 
     print("  syncing guilds ... ")
-    for guild_id in [constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, constants.ROLLING_WAVES_REPUBLIC_GUILD_ID]:
+    for guild_id in [constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, constants.ROLLING_WAVES_REPUBLIC_GUILD_ID, constants.THE_SERVER_GUILD_ID]:
         try:
             await bot.tree.sync(guild=discord.Object(id=guild_id))
             print(f"    guild {guild_id}: Success")
@@ -47,6 +49,5 @@ async def setup_hook():
     await bot.tree.sync()
 
     print("setup finished!")
-
 
 bot.run(environment.DISCORD_TOKEN)

@@ -97,7 +97,8 @@ class TriviaCog(CustomCog):
         constants.OpenTDBCategory.EntertainmentFilm.display, # type: ignore
         constants.OpenTDBCategory.EntertainmentJapaneseAnimeAndManga.display, # type: ignore
         constants.OpenTDBCategory.EntertainmentMusic.display, # type: ignore
-        constants.OpenTDBCategory.ScienceMathematics.display # type: ignore
+        constants.OpenTDBCategory.ScienceMathematics.display, # type: ignore
+        constants.OpenTDBCategory.ScienceComputers.display # type: ignore
       ] = constants.OpenTDBCategory.Any.display               
     ):
       self.log.info(f"/trivia called. (user.id={interaction.user.id}, difficulty={difficulty}, cateogry={category})")
