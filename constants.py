@@ -142,3 +142,29 @@ class TransactionKind(Enum):
 
     PURCHASE = 3000
     PURCHASE_SHOP = PURCHASE + 1
+
+class ListItemKind(Enum):
+    NORMAL = (1, "Normal")
+    GAME = (2, "Game")
+    MOVIE = (3, "Movie")
+    BOOK = (4, "Book")
+
+    def __init__(self, id: int, display: str):
+        self.id : int = id
+        self.display : str = display
+
+    @classmethod
+    def from_str(cls, display_value : str) -> Optional["ListItemKind"]:
+        for kind in ListItemKind:
+            if kind.display == display_value:
+                return kind
+        
+        return None
+    
+    @classmethod
+    def from_int(cls, id_value : int) -> Optional["ListItemKind"]:
+        for kind in ListItemKind:
+            if kind.id == id_value:
+                return kind
+            
+        return None

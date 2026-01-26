@@ -53,11 +53,12 @@ CREATE TABLE list_items(
   list_id INTEGER NOT NULL,
   content TEXT,
   score INTEGER,
-  position INTEGER,
+  position INTEGER, kind INTEGER NOT NULL DEFAULT 1, metadata_id TEXT,
   FOREIGN KEY (list_id) REFERENCES lists(id)
 );
 -- Dbmate schema migrations
 INSERT INTO "migrations" (version) VALUES
   ('20250717070747'),
   ('20250727203847'),
-  ('20260125032850');
+  ('20260125032850'),
+  ('20260126014605');

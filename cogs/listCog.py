@@ -1,13 +1,16 @@
 import io
 
-from typing import Literal
+from typing import Literal, Optional
 import discord
 import discord.ext
 import discord.ext.commands
 import discord.file
 
+import requests
+
 import constants
 import database
+import environment
 
 from cogs.customCog import CustomCog
 
@@ -35,6 +38,8 @@ class TListItem:
     self.content : str = ""
     self.score : int = 0
     self.position : int = 0
+    self.kind :  constants.ListItemKind = constants.ListItemKind.NORMAL
+    self.metadata_id : str = ""
 
   def set_from_record(self, record : tuple):
     self.id = record[0]
@@ -42,6 +47,8 @@ class TListItem:
     self.content = record[2]
     self.score = record[3]
     self.position = record[4]
+    self.kind = constants.ListItemKind.from_int(record[5])
+    self.metadata_id = record[6]
 
     return self
 
@@ -72,7 +79,7 @@ class ListCog(CustomCog):
   def __sanitize_item_content(self, item_content : str):
     return item_content.strip()
 
-  def __get_item_id_by_position(self, list_id : int, item_position : int):
+  def __get_item_id_by_position(self, list_id : int, item_position : int) -> Optional[int]:
     con = database.ConnectionPool.get()
     cur = con.cursor()
     
@@ -150,6 +157,71 @@ class ListCog(CustomCog):
 
     return await interaction.response.send_message(embed=em, ephemeral=list.is_public==False)    
 
+  async def __item_detail(self, interaction : discord.Interaction, list_name : str, item_position : int):
+    em = discord.Embed(title="", description="")
+
+    # find list id 
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # find item id
+    item_id = self.__get_item_id_by_position(list_id, item_position)
+
+    if item_id == None:
+      em.description = f"No item with position {item_position} on list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    # show 
+    sql = "SELECT * FROM list_items WHERE id = ?;"
+
+    cur.execute(sql, [item_id])
+
+    item = TListItem().set_from_record(cur.fetchone())
+
+    database.ConnectionPool.release(con)
+
+    if item.kind == constants.ListItemKind.MOVIE:
+      url = f"https://www.omdbapi.com/?i={item.metadata_id}&apikey={environment.OMDB_KEY}"
+
+      response = requests.get(url)
+
+      if response.status_code == 200:
+        data = response.json()
+        em.description += f"\n**{item.content}**"
+      
+        if data['Poster'] != "N/A":
+          em.set_image(url=data['Poster'])
+        elif data['Plot'] != "N/A":
+          em.description += f"\n{data['Plot']}"
+
+        footer_text = ""
+
+        if data['Metascore'] != "N/A":
+          footer_text+=f"Metascore: {data['Metascore']}/100"
+        elif data['imdbRating'] != "N/A":
+          footer_text+=f"IMDB Rating: {data['imdbRating']}/10"
+        else:
+          footer_text+=f"Unknown Score"
+
+        if data['Runtime'] != "N/A":
+          footer_text += f" - Runtime: {data['Runtime']}" 
+
+        em.set_footer(text=footer_text)
+
+      else:
+        em.description += "movie matadata could not be obtained for the given resource"
+
+    else:
+      em.description += f"**{item.content}**"
+
+    return await interaction.response.send_message(embed=em, ephemeral=True)
+
   @discord.app_commands.command(name="list_add")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
   async def list_add(self,  interaction : discord.Interaction, list_name : str):
@@ -208,9 +280,9 @@ class ListCog(CustomCog):
     em.description = f"list \"{list_name}\" has been deleted."
     return await interaction.response.send_message(embed=em, ephemeral=True)
 
-  @discord.app_commands.command(name="list_show")
+  @discord.app_commands.command(name="list_index")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def list_show(self, interaction : discord.Interaction):
+  async def list_index(self, interaction : discord.Interaction):
     em = discord.Embed(title="", description="")
 
     em.description += f"lists of {interaction.user.display_name}:"
@@ -307,7 +379,7 @@ class ListCog(CustomCog):
 
   @discord.app_commands.command(name="item_add")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def item_add(self, interaction : discord.Interaction, list_name : str, item_content : str):
+  async def list_add(self, interaction : discord.Interaction, list_name : str, item_content : str):
     em = discord.Embed(title="", description="")
 
     con = database.ConnectionPool.get()
@@ -387,6 +459,52 @@ class ListCog(CustomCog):
 
     return await self.__list_detail(interaction, list_name)
 
+  @discord.app_commands.command(name="item_identity")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  async def item_identity(self, interaction : discord.Interaction, list_name : str, item_position : int, item_kind : Literal[
+    constants.ListItemKind.NORMAL.display, # type: ignore  
+    constants.ListItemKind.MOVIE.display, # type: ignore
+    #constants.ListItemKind.BOOK.display, # type: ignore
+    #constants.ListItemKind.GAME.display, # type: ignore
+    ], metadata_id : str):
+    em = discord.Embed(title="", description="")
+    
+    # find list id 
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # find item id
+    item_id = self.__get_item_id_by_position(list_id, item_position)
+
+    if item_id == None:
+      em.description = f"No item with position {item_position} on list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    sql = "UPDATE list_items SET kind = ?, metadata_id = ? WHERE id = ?;"
+
+    kind_id = constants.ListItemKind.from_str(item_kind)
+    kind_id = kind_id.id
+
+    print("kind_id: ", kind_id)
+    print("metadata_id: ", metadata_id)
+    print("item_id: ", item_id)
+
+    cur.execute(sql, [kind_id, metadata_id, item_id])
+
+    con.commit()
+
+    database.ConnectionPool.release(con)
+
+    return await self.__item_detail(interaction, list_name, item_position)
+
   @discord.app_commands.command(name="item_delete")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
   async def item_delete(self, interaction : discord.Interaction, list_name : str, item_position : int):
@@ -423,6 +541,11 @@ class ListCog(CustomCog):
     self.__order_list_by_position(list_id)
 
     return await self.__list_detail(interaction, list_name)
+
+  @discord.app_commands.command(name="item_detail")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  async def item_detail(self, interaction : discord.Interaction, list_name : str, item_position : int):
+    return await self.__item_detail(interaction, list_name, item_position)
 
 async def setup(bot):
     await bot.add_cog(ListCog(bot))
