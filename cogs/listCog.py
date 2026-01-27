@@ -1,4 +1,5 @@
 import io
+import random
 
 from typing import Literal, Optional
 import discord
@@ -121,6 +122,35 @@ class ListCog(CustomCog):
 
     database.ConnectionPool.release(con)
 
+  def __append_item_to_list(self, list_id, item : TListItem):
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+    
+    # calc next position
+    sql = "SELECT MAX(position) FROM list_items WHERE list_id = ?;"
+
+    cur.execute(sql, [list_id])
+
+    row = cur.fetchone()
+
+    if row[0] == None:
+      next_position = 1
+    else:
+      next_position = row[0] + 1
+
+    # add item
+    sql = "INSERT INTO list_items(list_id, content, score, position, kind, metadata_id) VALUES(?, ?, ?, ?, ?, ?)"
+
+    cur.execute(sql, [list_id, item.content, item.score, next_position, item.kind.id, item.metadata_id])
+
+    item_id = cur.lastrowid
+    
+    con.commit()
+
+    database.ConnectionPool.release(con)
+
+    return item_id
+
   async def __list_detail(self, interaction : discord.Interaction, list_name : str):
     em = discord.Embed(title="", description="")
 
@@ -222,9 +252,9 @@ class ListCog(CustomCog):
 
     return await interaction.response.send_message(embed=em, ephemeral=True)
 
-  @discord.app_commands.command(name="list_add")
+  @discord.app_commands.command(name="list_new")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def list_add(self,  interaction : discord.Interaction, list_name : str):
+  async def list_new(self,  interaction : discord.Interaction, list_name : str):
     em = discord.Embed(title="", description="")
     
     con = database.ConnectionPool.get()
@@ -377,13 +407,10 @@ class ListCog(CustomCog):
 
     return await interaction.response.send_message(file=file, ephemeral=list.is_public==False)
 
-  @discord.app_commands.command(name="item_add")
+  @discord.app_commands.command(name="list_item")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def list_add(self, interaction : discord.Interaction, list_name : str, item_content : str):
+  async def list_item(self, interaction : discord.Interaction, list_name : str, item_content : str):
     em = discord.Embed(title="", description="")
-
-    con = database.ConnectionPool.get()
-    cur = con.cursor()
 
     # search list by name    
     list_name = self.__sanitize_list_name(list_name)
@@ -391,36 +418,23 @@ class ListCog(CustomCog):
     list_id = self.__get_list_id_by_name(interaction, list_name)
 
     if list_id == None:
-      database.ConnectionPool.release(con)
       em.description = f"No known list \"{list_name}\""
       return await interaction.response.send_message(embed=em, ephemeral=True)
 
-    # calc next position
-    sql = "SELECT MAX(position) FROM list_items WHERE list_id = ?;"
+    item = TListItem()
 
-    cur.execute(sql, [list_id])
+    item.content = item_content
+    item.score = 0
+    item.kind = constants.ListItemKind.NORMAL
+    item.metadata_id = ""
 
-    row = cur.fetchone()
-
-    if row[0] == None:
-      next_position = 1
-    else:
-      next_position = row[0] + 1
-
-    # add item
-    sql = "INSERT INTO list_items(list_id, content, score, position) VALUES(?, ?, ?, ?)"
-
-    cur.execute(sql, [list_id, item_content, 0, next_position])
-
-    con.commit()
-
-    database.ConnectionPool.release(con)
+    self.__append_item_to_list(list_id, item)
 
     return await self.__list_detail(interaction, list_name)
 
-  @discord.app_commands.command(name="item_content")
+  @discord.app_commands.command(name="list_item_content")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def item_content(self, interaction : discord.Interaction, list_name : str, item_position : int, item_content : str):
+  async def list_item_content(self, interaction : discord.Interaction, list_name : str, item_position : int, item_content : str):
     em = discord.Embed(title="", description="")
 
     item_content = self.__sanitize_item_content(item_content)
@@ -459,9 +473,9 @@ class ListCog(CustomCog):
 
     return await self.__list_detail(interaction, list_name)
 
-  @discord.app_commands.command(name="item_identity")
+  @discord.app_commands.command(name="list_item_identity")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def item_identity(self, interaction : discord.Interaction, list_name : str, item_position : int, item_kind : Literal[
+  async def list_item_identity(self, interaction : discord.Interaction, list_name : str, item_position : int, item_kind : Literal[
     constants.ListItemKind.NORMAL.display, # type: ignore  
     constants.ListItemKind.MOVIE.display, # type: ignore
     #constants.ListItemKind.BOOK.display, # type: ignore
@@ -505,9 +519,9 @@ class ListCog(CustomCog):
 
     return await self.__item_detail(interaction, list_name, item_position)
 
-  @discord.app_commands.command(name="item_delete")
+  @discord.app_commands.command(name="unlist_item")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def item_delete(self, interaction : discord.Interaction, list_name : str, item_position : int):
+  async def unlist_item(self, interaction : discord.Interaction, list_name : str, item_position : int):
     em = discord.Embed(title="", description="")
 
     con = database.ConnectionPool.get()
@@ -542,9 +556,72 @@ class ListCog(CustomCog):
 
     return await self.__list_detail(interaction, list_name)
 
-  @discord.app_commands.command(name="item_detail")
+  @discord.app_commands.command(name="list_item_detail")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
-  async def item_detail(self, interaction : discord.Interaction, list_name : str, item_position : int):
+  async def list_item_detail(self, interaction : discord.Interaction, list_name : str, item_position : int):
+    return await self.__item_detail(interaction, list_name, item_position)
+
+  @discord.app_commands.command(name="list_movie")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  async def list_movie(self, interaction : discord.Interaction, list_name : str, imdb_id : str):
+    em = discord.Embed(title="", description="")
+    
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    url = f"https://www.omdbapi.com/?i={imdb_id}&apikey={environment.OMDB_KEY}"
+
+    response = requests.get(url)
+
+    if response.status_code != 200:
+      em.description += "movie matadata could not be obtained for the given resource"
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    data = response.json()
+
+    item = TListItem()
+
+    item.content = f"{data['Title']} ({data['Year']})"
+    item.score = 0
+    item.kind = constants.ListItemKind.MOVIE
+    item.metadata_id = imdb_id
+
+    self.__append_item_to_list(list_id, item)
+    
+    return await self.__list_detail(interaction, list_name)
+
+  @discord.app_commands.command(name="list_random")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  async def list_random(self, interaction : discord.Interaction, list_name : str):
+    em = discord.Embed(title="", description="")
+    
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    sql = "SELECT id, position FROM list_items WHERE list_id = ?;"
+
+    cur.execute(sql, [list_id])
+
+    items = cur.fetchall()
+
+    if items == None:
+      database.ConnectionPool.release(con)
+      em.description = f"List \"{list_name}\" has no items"
+      return await interaction.response.send_message(embed=em)
+
+    item_id, item_position = random.choice(items)
+
+    database.ConnectionPool.release(con)
+
     return await self.__item_detail(interaction, list_name, item_position)
 
 async def setup(bot):
