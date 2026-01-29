@@ -207,6 +207,13 @@ class ListCog(CustomCog):
     con = database.ConnectionPool.get()
     cur = con.cursor()
 
+    # check if list is public
+    sql = "SELECT is_public FROM lists WHERE id = ?"
+
+    cur.execute(sql, [list_id])
+
+    list_is_public = cur.fetchone()[0]
+
     # show 
     sql = "SELECT * FROM list_items WHERE id = ?;"
 
@@ -250,7 +257,7 @@ class ListCog(CustomCog):
     else:
       em.description += f"**{item.content}**"
 
-    return await interaction.response.send_message(embed=em, ephemeral=True)
+    return await interaction.response.send_message(embed=em, ephemeral=list_is_public==False)
 
   @discord.app_commands.command(name="list_new")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
