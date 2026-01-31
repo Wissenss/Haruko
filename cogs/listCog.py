@@ -171,8 +171,8 @@ class ListCog(CustomCog):
     cur.execute(sql, [list_id])
 
     list = TList().set_from_record(cur.fetchone()) 
-
-    em.description += f"**{list.name}**\n"
+    
+    em.set_author(url=f"{environment.WEB_ADDR}/list/{list_id}", name=f"{list_name}")
 
     # em.set_footer(text="visibility: " + ("public" if list.is_public else "private"))
 
