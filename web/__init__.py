@@ -3,11 +3,16 @@ from flask import Flask
 from flask import g
 from flask import render_template
 
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 import database
 import domain
 import constants
 
 app = Flask(__name__)
+
+# x_prefix=1 le indica a Flask que confíe en el encabezado X-Forwarded-Prefix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
 def get_db():
     if "db" not in g:
