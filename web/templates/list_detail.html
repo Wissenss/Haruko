@@ -1,15 +1,51 @@
 <!DOCTYPE html>
+<html>
+  
+  <head>
+    <title>{{list.name}}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
+  </head>
 
-<style>
-  html {
-    font-family: monospace;
-  }
-</style>
+  <body>
+    <h1>{{list.name}}</h1>
 
-<h1>{{title}}</h1>
+    <ol>
+      {% for item in list_items %}
+        {% if item.is_archived == false %}
+          <li>{{ item.content }}</li>
+        {% endif %}
+      {% endfor %}
+    </ol>
 
-<ol>
-  {% for item in items %}
-  <li>{{ item }}</li>
-  {% endfor %}
-</ol>
+    <h3>Archived</h3>
+
+    <ul>
+      {% for item in list_items %}
+        {% if item.is_archived == true %}
+          <li>
+            [
+            <time class="utc-date" datetime="{{ item.archived_at }}Z">
+              {{ item.archived_at }}
+            </time>
+            ]
+            <i>{{ item.content }}</i>
+          </li>
+        {% endif %}
+      {% endfor %}
+    </ul>
+  </body>
+
+  <script>
+    document.querySelectorAll("time.utc-date").forEach(el => {
+      const date = new Date(el.dateTime);
+
+      if (isNaN(date)) return;
+
+      el.textContent = new Intl.DateTimeFormat(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }).format(date);
+    });
+  </script>
+
+</html>

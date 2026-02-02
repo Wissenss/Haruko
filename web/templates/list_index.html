@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+
+<style>
+  html {
+    font-family: monospace;
+  }
+</style>
+
+<h1>List Index</h1>
+
+<ol>
+  {% for list in lists %}
+  <li>{{ list }}</li>
+  {% endfor %}
+</ol>

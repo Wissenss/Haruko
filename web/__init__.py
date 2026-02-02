@@ -1,8 +1,11 @@
+from typing import List
 from flask import Flask
 from flask import g
 from flask import render_template
 
 import database
+import domain
+import constants
 
 app = Flask(__name__)
 
@@ -28,31 +31,14 @@ def list_detail(id : int):
   con = get_db()
   cur = con.cursor()
 
-  list_title : str = ""
-  list_items : list = []
+  list : domain.TList = domain.ListRepo.get_list_by_id(con, id)
 
-  sql = "SELECT * FROM lists WHERE id = ?;"
-
-  cur.execute(sql, [id])
-
-  row = cur.fetchone()
-
-  if row == None:
+  if list == None:
     return "<p>404: not found</p>"
 
-  list_title = row[3]
-
-  if row[4] == 0:
+  if list.is_public == False:
     return "<p>403: forbidden</p>"
 
-  sql = "SELECT * FROM list_items WHERE list_id = ? ORDER BY position ASC;"
+  list_items : List[domain.TListItem] = domain.ListRepo.get_list_items_by_list_id(con, list.id)
 
-  cur.execute(sql, [id])
-
-  items_rows = cur.fetchall()
-
-  if items_rows != None:
-    for item_row in items_rows:
-      list_items.append(item_row[2])
-
-  return render_template("list_detail.html", title=list_title, items=list_items)
+  return render_template("list_detail.html", list=list, list_items=list_items)
