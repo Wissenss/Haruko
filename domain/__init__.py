@@ -117,3 +117,24 @@ class ListRepo:
       items.append(i)
 
     return items
+  
+  @classmethod
+  def get_public_lists(cls, connection : sqlite3.Connection) -> List[TList]:
+    cur = connection.cursor()
+
+    sql = "SELECT * FROM lists WHERE is_public <> 0;"
+
+    cur.execute(sql)
+
+    records = cur.fetchall()
+
+    lists = []
+
+    for r in records:
+      l = TList()
+
+      l.map_from_record(r)
+
+      lists.append(l)
+
+    return lists

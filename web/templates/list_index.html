@@ -1,15 +1,22 @@
 <!DOCTYPE html>
 
-<style>
-  html {
-    font-family: monospace;
-  }
-</style>
+<html>
+  
+  <head>
+    <title>Haruko - List Index</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
+  </head>
 
-<h1>List Index</h1>
+  <body>
+    <a href="{{ url_for('index')}}">[Index]</a>
 
-<ol>
-  {% for list in lists %}
-  <li>{{ list }}</li>
-  {% endfor %}
-</ol>
+    <h1>List Index</h1>
+
+    <ol>
+      {% for l in lists %}
+      <li><a href="{{ url_for('list_detail', id=l.id) }}">{{ l.name }}</a></li>
+      {% endfor %}
+    </ol>
+  </body>
+
+</html>

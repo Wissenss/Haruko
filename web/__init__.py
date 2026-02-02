@@ -28,14 +28,21 @@ def close_db(e=None):
 app.teardown_appcontext(close_db)
 
 @app.route("/")
-def hello_world():
-  return "<p>hello world!</p>"
+def index():
+  return render_template("index.html")
+
+@app.route("/list")
+def list_index():
+  con = get_db()
+
+  lists : List[domain.TList] = domain.ListRepo.get_public_lists(con)
+
+  return render_template("list_index.html", lists=lists)
 
 @app.route("/list/<int:id>")
 def list_detail(id : int):
   con = get_db()
-  cur = con.cursor()
-
+  
   list : domain.TList = domain.ListRepo.get_list_by_id(con, id)
 
   if list == None:
