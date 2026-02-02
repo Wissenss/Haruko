@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+
+<html>
+  
+  <head>
+    <title>Haruko - Item {{list_item.id}}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
+  </head>
+
+  <body>
+    <a href="{{ url_for('list_detail', id=list.id)}}">[{{list.name}}]</a>
+
+    <h1>{{list_item.content}}</h1>
+
+    <!-- movie metadata -->
+    
+    {% if list_item.kind.id == 3 %}
+    <img src="{{metadata['Poster']}}"/>
+    <p><b>Title: </b>{{metadata['Title']}}</p>
+    <p><b>Plot: </b>{{metadata['Plot']}}</p>
+    {% endif %}
+
+  </body>
+
+</html>

@@ -4,3 +4,4 @@ venv/
 *.env
 *.conf
 *.sqlite3
+*.sqlite

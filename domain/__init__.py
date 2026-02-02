@@ -54,7 +54,6 @@ class TList:
     self.created_at = database.parse_db_date(record[7])
     self.updated_at = database.parse_db_date(record[8]) 
 
-
 class ListRepo:
   def __init__(self):
     pass
@@ -98,10 +97,15 @@ class ListRepo:
     return item
   
   @classmethod
-  def get_list_items_by_list_id(cls, connection : sqlite3.Connection, list_id : int) -> List[TListItem]:
+  def get_list_items_by_list_id(cls, connection : sqlite3.Connection, list_id : int, include_archived = True) -> List[TListItem]:
     cur = connection.cursor()
 
-    sql = "SELECT * FROM list_items WHERE list_id = ? ORDER BY position;"
+    conditions = ""
+
+    if include_archived == False:
+      conditions += "AND is_archived == 0"
+
+    sql = f"SELECT * FROM list_items WHERE list_id = ? {conditions} ORDER BY position;"
 
     cur.execute(sql, [list_id])
 
