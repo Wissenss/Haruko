@@ -1,4 +1,20 @@
 html, body 
 {
   font-family: monospace;
+  /* font-size: 1rem; */
+  /* font-size: clamp(1rem, 0.95rem + 0.25vw, 1.125rem); */
+}
+
+/* mobile */
+@media (min-width: 768px) {
+  html, body {
+    font-size: 1.5rem; /* 18px */
+  }
+}
+
+/* desktop */
+@media (min-width: 1024px) {
+  html, body {
+    font-size: 1rem; /* 20px */
+  }
 }
