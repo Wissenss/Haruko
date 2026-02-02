@@ -8,7 +8,12 @@ html, body
 /* mobile */
 @media (min-width: 768px) {
   html, body {
-    font-size: 1.5rem; /* 18px */
+    font-size: 1.5rem; 
+  }
+   
+  ul, ol {
+    list-style-position: inside;
+    font-size: 1.25rem; 
   }
 }
 
