@@ -5,3 +5,4 @@ venv/
 *.conf
 *.sqlite3
 *.exe
+*.sqlite

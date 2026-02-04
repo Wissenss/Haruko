@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+
+<html>
+  
+  <head>
+    <title>Haruko - List Index</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
+  </head>
+
+  <body>
+    <a href="{{ url_for('index')}}">[Index]</a>
+
+    <h1>List Index</h1>
+
+    <ol>
+      {% for l in lists %}
+      <li><a href="{{ url_for('list_detail', id=l.id) }}">{{ l.name }}</a></li>
+      {% endfor %}
+    </ol>
+  </body>
+
+</html>

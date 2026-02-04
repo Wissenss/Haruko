@@ -47,13 +47,13 @@ CREATE TABLE lists (
   discord_guild_id INTEGER,
   name TEXT,
   is_public INTEGER NOT NULL DEFAULT 0
-);
+, is_archived INTEGER NOT NULL DEFAULT 0, archived_at TEXT DEFAULT NULL, created_at TEXT DEFAULT NULL, updated_at TEXT DEFAULT NULL);
 CREATE TABLE list_items(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   list_id INTEGER NOT NULL,
   content TEXT,
   score INTEGER,
-  position INTEGER, kind INTEGER NOT NULL DEFAULT 1, metadata_id TEXT,
+  position INTEGER, kind INTEGER NOT NULL DEFAULT 1, metadata_id TEXT, is_archived INTEGER NOT NULL DEFAULT 0, archived_at TEXT DEFAULT NULL, created_at TEXT DEFAULT NULL, updated_at TEXT DEFAULT NULL,
   FOREIGN KEY (list_id) REFERENCES lists(id)
 );
 -- Dbmate schema migrations
@@ -61,4 +61,5 @@ INSERT INTO "migrations" (version) VALUES
   ('20250717070747'),
   ('20250727203847'),
   ('20260125032850'),
-  ('20260126014605');
+  ('20260126014605'),
+  ('20260202043807');

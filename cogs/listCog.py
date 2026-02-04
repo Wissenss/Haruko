@@ -12,46 +12,9 @@ import requests
 import constants
 import database
 import environment
+from domain import ListRepo, TList, TListItem
 
 from cogs.customCog import CustomCog
-
-class TList:
-  def __init__(self):
-    self.id : int = 0
-    self.discord_user_id : int = 0
-    self.discord_guild_id : int = 0
-    self.name : str = ""
-    self.is_public : bool = False
-
-  def set_from_record(self, record : tuple):
-    self.id = record[0]
-    self.discord_user_id = record[1]
-    self.discord_guild_id = record[2]
-    self.name = record[3]
-    self.is_public = record[4] != 0
-
-    return self
-
-class TListItem:
-  def __init__(self):
-    self.id : int = 0
-    self.list_id : int = 0
-    self.content : str = ""
-    self.score : int = 0
-    self.position : int = 0
-    self.kind :  constants.ListItemKind = constants.ListItemKind.NORMAL
-    self.metadata_id : str = ""
-
-  def set_from_record(self, record : tuple):
-    self.id = record[0]
-    self.list_id = record[1]
-    self.content = record[2]
-    self.score = record[3]
-    self.position = record[4]
-    self.kind = constants.ListItemKind.from_int(record[5])
-    self.metadata_id = record[6]
-
-    return self
 
 class ListCog(CustomCog):
   def __init__(self, bot):
@@ -101,7 +64,7 @@ class ListCog(CustomCog):
     con = database.ConnectionPool.get()
     cur = con.cursor()
 
-    sql = "SELECT * FROM list_items WHERE list_id = ? ORDER BY position;"
+    sql = "SELECT * FROM list_items WHERE list_id = ? AND is_archived = 0 ORDER BY position;"
 
     cur.execute(sql, [list_id])
 
@@ -112,7 +75,9 @@ class ListCog(CustomCog):
     for row in rows:
       i += 1
 
-      item = TListItem().set_from_record(row)
+      item = TListItem()
+      
+      item.map_from_record(row)
 
       sql = "UPDATE list_items SET position = ? WHERE id = ?;"
 
@@ -127,7 +92,7 @@ class ListCog(CustomCog):
     cur = con.cursor()
     
     # calc next position
-    sql = "SELECT MAX(position) FROM list_items WHERE list_id = ?;"
+    sql = "SELECT MAX(position) FROM list_items WHERE list_id = ? AND is_archived = 0;"
 
     cur.execute(sql, [list_id])
 
@@ -139,7 +104,7 @@ class ListCog(CustomCog):
       next_position = row[0] + 1
 
     # add item
-    sql = "INSERT INTO list_items(list_id, content, score, position, kind, metadata_id) VALUES(?, ?, ?, ?, ?, ?)"
+    sql = "INSERT INTO list_items(list_id, content, score, position, kind, metadata_id, is_archived, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, 0, datetime('now'), datetime('now'))"
 
     cur.execute(sql, [list_id, item.content, item.score, next_position, item.kind.id, item.metadata_id])
 
@@ -170,19 +135,22 @@ class ListCog(CustomCog):
 
     cur.execute(sql, [list_id])
 
-    list = TList().set_from_record(cur.fetchone()) 
-
-    em.description += f"**{list.name}**\n"
+    list = TList()
+    
+    list.map_from_record(cur.fetchone()) 
+    
+    em.set_author(url=f"{environment.WEB_ADDR}/list/{list_id}", name=f"{list_name}")
 
     # em.set_footer(text="visibility: " + ("public" if list.is_public else "private"))
 
     # add items
-    sql = "SELECT * FROM list_items WHERE list_id = ?;"
+    sql = "SELECT * FROM list_items WHERE list_id = ? AND is_archived = 0;"
 
     cur.execute(sql, [list_id])
 
     for row in cur.fetchall():
-      item = TListItem().set_from_record(row)
+      item = TListItem()
+      item.map_from_record(row)
       em.description += f"\n {str(item.position).rjust(4)} - {item.content}"
 
     return await interaction.response.send_message(embed=em, ephemeral=list.is_public==False)    
@@ -207,12 +175,21 @@ class ListCog(CustomCog):
     con = database.ConnectionPool.get()
     cur = con.cursor()
 
+    # check if list is public
+    sql = "SELECT is_public FROM lists WHERE id = ?"
+
+    cur.execute(sql, [list_id])
+
+    list_is_public = cur.fetchone()[0]
+
     # show 
     sql = "SELECT * FROM list_items WHERE id = ?;"
 
     cur.execute(sql, [item_id])
 
-    item = TListItem().set_from_record(cur.fetchone())
+    item = TListItem()
+    
+    item.map_from_record(cur.fetchone())
 
     database.ConnectionPool.release(con)
 
@@ -263,7 +240,7 @@ class ListCog(CustomCog):
     else:
       em.description += f"**{item.content}**"
 
-    return await interaction.response.send_message(embed=em, ephemeral=True)
+    return await interaction.response.send_message(embed=em, ephemeral=list_is_public==False)
 
   @discord.app_commands.command(name="list_new")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
@@ -285,7 +262,7 @@ class ListCog(CustomCog):
       return await interaction.response.send_message(embed=em, ephemeral=True)
       
     # create new list
-    sql = "INSERT INTO lists (discord_user_id, discord_guild_id, name) VALUES(?,?,?);"
+    sql = "INSERT INTO lists (discord_user_id, discord_guild_id, name, is_public, is_archived, archived_at, created_at, updated_at) VALUES(?,?,?, 0, 0, NULL, datetime('now'), datetime('now'));"
 
     cur.execute(sql, [interaction.user.id, interaction.guild.id, list_name])
 
@@ -333,12 +310,14 @@ class ListCog(CustomCog):
     con = database.ConnectionPool.get()
     cur = con.cursor()
 
-    sql = "SELECT * FROM lists WHERE discord_guild_id = ? AND (discord_user_id = ? OR is_public = TRUE);"
+    sql = "SELECT * FROM lists WHERE discord_guild_id = ? AND (discord_user_id = ? OR is_public = TRUE) AND is_archived = 0;"
 
     cur.execute(sql, [interaction.guild.id, interaction.user.id])
 
     for row in cur.fetchall():
-      list = TList().set_from_record(row)
+      list = TList()
+      
+      list.map_from_record(row)
 
       em.description += f"\n- {list.name}"
     
@@ -397,7 +376,9 @@ class ListCog(CustomCog):
 
     cur.execute(sql, [list_id])
 
-    list = TList().set_from_record(cur.fetchone())
+    list = TList()
+    
+    list.map_from_record(cur.fetchone())
 
     # get list items info
     sql = "SELECT * FROM list_items WHERE list_id = ? ORDER BY position;"
@@ -410,7 +391,8 @@ class ListCog(CustomCog):
     
     if rows != None:
       for row in rows:
-        item = TListItem().set_from_record(row)
+        item = TListItem()
+        item.map_from_record(row)
         content += f"\n{item.position},\"{item.content}\""
 
     # create file
@@ -444,6 +426,8 @@ class ListCog(CustomCog):
     self.__append_item_to_list(list_id, item)
 
     return await self.__list_detail(interaction, list_name)
+
+  # TODO: update updated_at field when updating records of list and list items
 
   @discord.app_commands.command(name="list_item_content")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
@@ -537,14 +521,10 @@ class ListCog(CustomCog):
   async def unlist_item(self, interaction : discord.Interaction, list_name : str, item_position : int):
     em = discord.Embed(title="", description="")
 
-    con = database.ConnectionPool.get()
-    cur = con.cursor()
-
     # find list id 
     list_id = self.__get_list_id_by_name(interaction, list_name)
 
     if list_id == None:
-      database.ConnectionPool.release(con)
       em.description = f"No known list \"{list_name}\""
       return await interaction.response.send_message(embed=em, ephemeral=True)
 
@@ -552,9 +532,11 @@ class ListCog(CustomCog):
     item_id = self.__get_item_id_by_position(list_id, item_position)
 
     if item_id == None:
-      database.ConnectionPool.release(con)
       em.description = f"No item with position {item_position} on list \"{list_name}\""
       return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
 
     # delete item
     sql = "DELETE FROM list_items WHERE id = ?;"
@@ -667,6 +649,41 @@ class ListCog(CustomCog):
 
     self.__append_item_to_list(list_id, item)
     
+    return await self.__list_detail(interaction, list_name)
+
+  @discord.app_commands.command(name="list_item_archive")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  async def list_item_archive(self, interaction : discord.Interaction, list_name : str, item_position : int):
+    em = discord.Embed(title="", description="")
+
+    # find list id 
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # find item id
+    item_id = self.__get_item_id_by_position(list_id, item_position)
+
+    if item_id == None:
+      em.description = f"No item with position {item_position} on list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    # archive
+    con = database.create_connection()
+    cur = con.cursor()
+
+    sql = "UPDATE list_items SET is_archived = 1, archived_at = datetime('now'), position = 0 WHERE id = ?;"
+
+    cur.execute(sql, [item_id])
+
+    con.commit()
+    con.close()
+
+    # reorder items
+    self.__order_list_by_position(list_id)
+
     return await self.__list_detail(interaction, list_name)
 
 async def setup(bot):

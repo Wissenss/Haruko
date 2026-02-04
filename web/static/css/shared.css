@@ -1,0 +1,28 @@
+html, body 
+{
+  font-family: monospace;
+}
+
+/* mobile */
+@media (min-width: 600px) {
+  html, body {
+    font-size: 1.5rem; 
+  }
+   
+  ul, ol {
+    list-style-position: inside;
+    font-size: 1.25rem; 
+  }
+}
+
+/* desktop */
+@media (min-width: 1024px) {
+  html, body {
+    font-size: 1rem; 
+  }
+
+  ul, ol {
+    list-style-position: inside;
+    font-size: 1rem; 
+  }
+}

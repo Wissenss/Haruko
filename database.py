@@ -1,3 +1,5 @@
+import datetime
+
 import sqlite3
 
 import environment
@@ -9,6 +11,20 @@ import environment
 
 def create_connection() -> sqlite3.Connection:
     return sqlite3.connect(environment.DATABASE_PATH)
+
+DB_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S" 
+
+def format_db_date(date : datetime.datetime) -> str:
+    if date == None:
+        return None
+    
+    return date.strftime(DB_TIMESTAMP_FORMAT)
+
+def parse_db_date(date_str : str) -> datetime.datetime:
+    if date_str == None:
+        return None 
+
+    return datetime.datetime.strptime(date_str, DB_TIMESTAMP_FORMAT)
 
 class ConnectionPool:
     pool_min_size : int = 10
