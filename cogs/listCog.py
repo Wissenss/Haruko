@@ -223,6 +223,19 @@ class ListCog(CustomCog):
 
       else:
         em.description += "movie matadata could not be obtained for the given resource"
+    elif item.kind == constants.ListItemKind.BOOK:
+      url = f"https://openlibrary.org/works/{item.metadata_id}.json"
+
+      response = requests.get(url)
+
+      if response.status_code != 200:
+        em.description += "book metadata could not be obtained for the given resource"
+        return await interaction.response.send_message(embed=em, ephemeral=True)
+      
+      data = response.json()
+
+      em.title = data["title"]
+      em.set_image(url=f"https://covers.openlibrary.org/b/id/{data["covers"][0]}-L.jpg")
 
     else:
       em.description += f"**{item.content}**"
@@ -557,7 +570,7 @@ class ListCog(CustomCog):
     response = requests.get(url)
 
     if response.status_code != 200:
-      em.description += "movie matadata could not be obtained for the given resource"
+      em.description += "movie metadata could not be obtained for the given resource"
       return await interaction.response.send_message(embed=em, ephemeral=True)
     
     data = response.json()
@@ -603,6 +616,38 @@ class ListCog(CustomCog):
     database.ConnectionPool.release(con)
 
     return await self.__item_detail(interaction, list_name, item_position)
+  
+  @discord.app_commands.command(name="list_book")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  async def list_book(self, interaction : discord.Interaction, list_name : str, book_id : str):
+    em = discord.Embed(title="", description="")
+    
+    list_id = self.__get_list_id_by_name(interaction, list_name)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    url = f"https://openlibrary.org/works/{book_id}.json"
+    
+    response = requests.get(url)
+
+    if response.status_code != 200:
+      em.description += "book metadata could not be obtained for the given resource"
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    data = response.json()
+
+    item = TListItem()
+
+    item.content = f"{data["title"]}"
+    item.score = 0
+    item.kind = constants.ListItemKind.BOOK
+    item.metadata_id = book_id
+
+    self.__append_item_to_list(list_id, item)
+    
+    return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_item_archive")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
