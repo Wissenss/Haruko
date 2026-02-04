@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Haruko - Guess The Movie Plot</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
+  </head>
+
+  <script>
+    function choice(choice_id)
+    {
+      if (choice_id === {{ answer_md['id'] }})
+      {
+        <!-- alert("correct answer!") -->
+        document.getElementById("correct_dlg").showModal();
+      }
+      else
+      {
+        <!-- alert("wrong answer!") -->
+        document.getElementById("wrong_dlg").showModal();
+      }
+    }
+  </script>
+
+  <body>
+    <a href="{{ url_for('index')}}">[Index]</a>
+    <!-- <p>Answer: {{ answer_md["original_title"] }} - Plot: {{ answer_md["overview"] }}</p> -->
+    <p>score: {{right_score}} / {{right_score + wrong_score}}</p>
+    <h4>Plot:</h4>
+
+    <p><i>"{{ answer_md["overview"] }}"</i></p>
+
+    <h4>Which movie is this from?</h4>
+
+    <div style="display: flex;">
+      {% for c_md in choices_md %}
+      <button onclick="choice({{c_md['id']}});" style="display: flex; flex-direction: column">
+        <img src="https://image.tmdb.org/t/p/w200/{{c_md['poster_path']}}"/>
+        <p>{{ c_md['original_title'] }} ({{c_md['release_date'][:4]}})</p>
+      </button>
+      {% endfor %}
+    </div>
+
+    <dialog id="correct_dlg">
+      <p>Correct!</p>
+      <p>The movie is: <i>"{{answer_md['original_title']}}"</i></p>
+      <button onclick="window.location = '{{ url_for('index')}}'">Quit</button>
+      <button onclick="window.location = '{{ url_for('games_movie_plot', rs=right_score+1, ws=wrong_score)}}'">Next</button>
+    </dialog>
+
+    <dialog id="wrong_dlg">
+      <p>Wrong!</p>
+      <p>The movie is: <i>"{{answer_md['original_title']}}"</i></p>
+      <button onclick="window.location = '{{ url_for('index')}}'">Quit</button>
+      <button onclick="window.location = '{{ url_for('games_movie_plot', rs=right_score, ws=wrong_score+1)}}'">Next</button>
+    </dialog>
+  </body>
+</html>

@@ -11,6 +11,7 @@ def get_environment_var(name, default = ""):
 DATABASE_PATH = get_environment_var("DATABASE_PATH")
 DISCORD_TOKEN = get_environment_var("DISCORD_TOKEN")
 OMDB_KEY = get_environment_var("OMDB_KEY")
+TMDB_KEY = get_environment_var("TMDB_KEY")
 WEB_ADDR = get_environment_var("WEB_ADDR", "http://localhost:5000")
 
 if __name__ == "__main__":

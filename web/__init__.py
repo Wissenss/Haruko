@@ -5,6 +5,7 @@ from flask import g
 from flask import render_template
 from flask import url_for
 from flask import redirect
+from flask import request
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -35,6 +36,11 @@ def close_db(e=None):
         db.close()
 
 app.teardown_appcontext(close_db)
+
+TMDB_HEADERS = {
+    "accept": "application/json",
+    "Authorization": f"Bearer {environment.TMDB_KEY}"
+}
 
 @app.route("/")
 def index():
@@ -111,3 +117,50 @@ def list_item_random(list_id : int):
   item : domain.TListItem = random.choice(list_items)
 
   return redirect(url_for('list_item_detail', list_id=list.id, id=item.id))
+
+@app.route("/games/guess-the-movie-plot")
+def games_movie_plot():
+  
+  right_score = int(request.args.get('rs', 0))
+  wrong_score = int(request.args.get('ws', 0))
+
+  # get a random movie
+  
+  response = requests.get(f"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={random.randint(1, 30)}&sort_by=popularity.desc", headers=TMDB_HEADERS)
+  
+  if response.status_code != 200:
+    return "<p>502: gateway timeout</p>"
+
+  data = response.json()
+
+  answer_movie_details = random.choice(data["results"])
+
+  print("\n\nanswer movie: ", answer_movie_details)
+
+  # get other three movies that share similarities 
+
+  response = requests.get(f"https://api.themoviedb.org/3/movie/{answer_movie_details["id"]}/similar", headers=TMDB_HEADERS)
+  
+  if response.status_code != 200:
+    return "<p>502: gateway timeout</p>"
+
+  data = response.json()
+  
+  results = data["results"]
+
+  print("\n\nchoices: ", results)
+
+  choices_movie_details = []
+
+  for c in random.choices(results, k=min(len(results), 10)):
+    if c["id"] != answer_movie_details["id"] and c["original_title"] != answer_movie_details["original_title"]:
+      choices_movie_details.append(c)
+
+    if len(choices_movie_details) == 3:
+      break
+
+  choices_movie_details.append(answer_movie_details)
+
+  random.shuffle(choices_movie_details)
+
+  return render_template("guess_the_movie_plot.html", answer_md=answer_movie_details, choices_md=choices_movie_details, right_score=right_score, wrong_score=wrong_score)

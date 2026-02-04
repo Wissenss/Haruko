@@ -2,12 +2,13 @@
   <head>
     <title>Haruko</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
-    </head>
+  </head>
 
   <body>
     <h1>Index</h1>
     <ul>
       <li><a href="{{url_for('list_index')}}">List Index</a></li>
+      <li><a href="{{url_for('games_movie_plot')}}">Guess The Movie Plot</a></li>
     </ul>
   </body>
 </html>
