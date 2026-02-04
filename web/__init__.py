@@ -126,7 +126,7 @@ def games_movie_plot():
 
   # get a random movie
   
-  response = requests.get(f"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={random.randint(1, 30)}&sort_by=popularity.desc", headers=TMDB_HEADERS)
+  response = requests.get(f"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={random.randint(1, 100)}&sort_by=popularity.desc", headers=TMDB_HEADERS)
   
   if response.status_code != 200:
     return "<p>502: gateway timeout</p>"
@@ -135,7 +135,7 @@ def games_movie_plot():
 
   answer_movie_details = random.choice(data["results"])
 
-  print("\n\nanswer movie: ", answer_movie_details)
+  #print("\n\nanswer movie: ", answer_movie_details)
 
   # get other three movies that share similarities 
 
@@ -148,12 +148,12 @@ def games_movie_plot():
   
   results = data["results"]
 
-  print("\n\nchoices: ", results)
+  #print("\n\nchoices: ", results)
 
   choices_movie_details = []
 
   for c in random.choices(results, k=min(len(results), 10)):
-    if c["id"] != answer_movie_details["id"] and c["original_title"] != answer_movie_details["original_title"]:
+    if c["id"] != answer_movie_details["id"] and c["original_title"] != answer_movie_details["original_title"]: # make sure we only include movies that are not the answer, as we will add this one later
       choices_movie_details.append(c)
 
     if len(choices_movie_details) == 3:
@@ -161,6 +161,15 @@ def games_movie_plot():
 
   choices_movie_details.append(answer_movie_details)
 
+  if len(choices_movie_details) < 2:
+    return redirect(url_for("games_movie_plot", rs=right_score, ws=wrong_score))
+
   random.shuffle(choices_movie_details)
+
+  # censor words from the answer movie title that may appear on the plot text
+  overview : str = answer_movie_details["overview"] 
+
+  for tabu_word in answer_movie_details["original_title"].split():
+    overview = overview.replace(tabu_word, "#" * len(tabu_word))
 
   return render_template("guess_the_movie_plot.html", answer_md=answer_movie_details, choices_md=choices_movie_details, right_score=right_score, wrong_score=wrong_score)
