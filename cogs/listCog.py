@@ -79,7 +79,7 @@ class ListCog(CustomCog):
       
       item.map_from_record(row)
 
-      sql = "UPDATE list_items SET position = ? WHERE id = ?;"
+      sql = "UPDATE list_items SET position = ?, updated_at = datetieme('now') WHERE id = ?;"
 
       cur.execute(sql, [i, item.id])
     
@@ -414,8 +414,6 @@ class ListCog(CustomCog):
 
     return await self.__list_detail(interaction, list_name)
 
-  # TODO: update updated_at field when updating records of list and list items
-
   @discord.app_commands.command(name="list_item_content")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
   async def list_item_content(self, interaction : discord.Interaction, list_name : str, item_position : int, item_content : str):
@@ -447,7 +445,7 @@ class ListCog(CustomCog):
       return await interaction.response.send_message(embed=em, ephemeral=True)
     
     # update content
-    sql = "UPDATE list_items SET content = ? WHERE id = ?;"
+    sql = "UPDATE list_items SET content = ?, updated_at = datetime('now') WHERE id = ?;"
 
     cur.execute(sql, [item_content, item_id])
 
@@ -486,7 +484,7 @@ class ListCog(CustomCog):
     con = database.ConnectionPool.get()
     cur = con.cursor()
 
-    sql = "UPDATE list_items SET kind = ?, metadata_id = ? WHERE id = ?;"
+    sql = "UPDATE list_items SET kind = ?, metadata_id = ?, updated_at = datetime('now') WHERE id = ?;"
 
     kind_id = constants.ListItemKind.from_str(item_kind)
     kind_id = kind_id.id
@@ -629,7 +627,7 @@ class ListCog(CustomCog):
     con = database.create_connection()
     cur = con.cursor()
 
-    sql = "UPDATE list_items SET is_archived = 1, archived_at = datetime('now'), position = 0 WHERE id = ?;"
+    sql = "UPDATE list_items SET is_archived = 1, archived_at = datetime('now'), updated_at = datetime('now') position = 0 WHERE id = ?;"
 
     cur.execute(sql, [item_id])
 
