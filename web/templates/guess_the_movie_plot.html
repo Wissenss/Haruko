@@ -34,8 +34,8 @@
 
     <div style="display: flex;">
       {% for c_md in choices_md %}
-      <button onclick="choice({{c_md['id']}});" style="display: flex; flex-direction: column">
-        <img src="https://image.tmdb.org/t/p/w200/{{c_md['poster_path']}}"/>
+      <button onclick="choice({{c_md['id']}});" style="display: flex; flex-direction: column; align-items: center;">
+        <img src="https://image.tmdb.org/t/p/w200/{{c_md['poster_path']}}" style="max-height: 250px; max-width: 150px;"/>
         <p>{{ c_md['original_title'] }} ({{c_md['release_date'][:4]}})</p>
       </button>
       {% endfor %}

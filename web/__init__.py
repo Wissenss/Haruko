@@ -1,5 +1,6 @@
 from typing import List
 import random
+import re
 from flask import Flask
 from flask import g
 from flask import render_template
@@ -123,19 +124,28 @@ def games_movie_plot():
   
   right_score = int(request.args.get('rs', 0))
   wrong_score = int(request.args.get('ws', 0))
+  answer_movie_id = int(request.args.get('ami', 0))
 
-  # get a random movie
+  # get a random movie (if none provided)
+  if answer_movie_id == 0:
+    response = requests.get(f"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={random.randint(1, 100)}&sort_by=popularity.desc", headers=TMDB_HEADERS)
+    
+    if response.status_code != 200:
+      return "<p>502: gateway timeout</p>"
+
+    data = response.json()
+
+    answer_movie_details = random.choice(data["results"])
   
-  response = requests.get(f"https://api.themoviedb.org/3/discover/movie?include_adult=false&include_video=false&language=en-US&page={random.randint(1, 100)}&sort_by=popularity.desc", headers=TMDB_HEADERS)
-  
-  if response.status_code != 200:
-    return "<p>502: gateway timeout</p>"
+  else:
+    response = requests.get(f"https://api.themoviedb.org/3/movie/{answer_movie_id}", headers=TMDB_HEADERS)
 
-  data = response.json()
+    if response.status_code != 200:
+      return "<p>502: gateway timeout</p>"
+    
+    answer_movie_details = response.json()
 
-  answer_movie_details = random.choice(data["results"])
-
-  #print("\n\nanswer movie: ", answer_movie_details)
+  answer_movie_id = answer_movie_details["id"]
 
   # get other three movies that share similarities 
 
@@ -148,19 +158,37 @@ def games_movie_plot():
   
   results = data["results"]
 
-  #print("\n\nchoices: ", results)
-
   choices_movie_details = []
 
   for c in random.choices(results, k=min(len(results), 10)):
-    if c["id"] != answer_movie_details["id"] and c["original_title"] != answer_movie_details["original_title"]: # make sure we only include movies that are not the answer, as we will add this one later
-      choices_movie_details.append(c)
+    # cannot have the same id as the answer
+    if c["id"] == answer_movie_details["id"]:
+      continue
+
+    # cannot have the same title as the answer
+    if c["original_title"] == answer_movie_details["original_title"]:
+      continue
+
+    # cannot repeat choices
+    if c["id"] in [ec["id"] for ec in choices_movie_details]:
+      continue
+
+    # image link must be valid - takes a long time... we need a better solution
+    # img_path = f"https://image.tmdb.org/t/p/w200/{c['poster_path']}"
+    # response = requests.head(img_path, timeout=5)
+    # if response.status_code != 200:
+    #   continue 
+    # if not response.headers["content-type"] in ["image/png", "image/jpeg", "image/jpg"]:
+    #   continue
+
+    choices_movie_details.append(c)
 
     if len(choices_movie_details) == 3:
       break
 
   choices_movie_details.append(answer_movie_details)
 
+  # if no matches where found, then try again ...
   if len(choices_movie_details) < 2:
     return redirect(url_for("games_movie_plot", rs=right_score, ws=wrong_score))
 
@@ -170,6 +198,10 @@ def games_movie_plot():
   overview : str = answer_movie_details["overview"] 
 
   for tabu_word in answer_movie_details["original_title"].split():
-    overview = overview.replace(tabu_word, "#" * len(tabu_word))
+    print("\ntabu_word: ", tabu_word)
+    overview = re.sub(tabu_word, "#" * random.randint(4, 10), overview, flags=re.IGNORECASE)
+    overview = re.sub("# #", "##", overview, flags=re.IGNORECASE)
+
+  answer_movie_details["overview"] = overview 
 
   return render_template("guess_the_movie_plot.html", answer_md=answer_movie_details, choices_md=choices_movie_details, right_score=right_score, wrong_score=wrong_score)
