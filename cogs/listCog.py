@@ -23,13 +23,13 @@ class ListCog(CustomCog):
   def __sanitize_list_name(self, list_name : str) -> str:
     return list_name.strip() 
 
-  def __get_list_id_by_name(self, interaction : discord.Interaction, list_name : str) -> int:
+  def __get_list_id_by_name(self, list_name : str, discord_guild_id : int, discord_user_id : int) -> int:
     con = database.ConnectionPool.get()
     cur = con.cursor()
     
-    sql = "SELECT id FROM lists WHERE name = ? AND discord_guild_id = ? AND (discord_user_id = ? OR is_public = TRUE);"
+    sql = "SELECT l.id FROM lists l LEFT JOIN list_guilds lg ON l.id = lg.list_id WHERE name = ? AND (l.discord_guild_id = ? OR lg.discord_guild_id = ?) AND (l.discord_user_id = ? OR l.is_public = TRUE);"
 
-    cur.execute(sql, [list_name, interaction.guild.id, interaction.user.id])
+    cur.execute(sql, [list_name, discord_guild_id, discord_guild_id, discord_user_id])
 
     row = cur.fetchone() 
 
@@ -124,7 +124,7 @@ class ListCog(CustomCog):
 
     list_name = self.__sanitize_list_name(list_name)
 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -141,7 +141,9 @@ class ListCog(CustomCog):
     
     em.set_author(url=f"{environment.WEB_ADDR}/list/{list_id}", name=f"{list_name}")
 
-    # em.set_footer(text="visibility: " + ("public" if list.is_public else "private"))
+    if list.discord_guild_id != interaction.guild.id:
+      original_guild = await self.bot.fetch_guild(list.discord_guild_id)
+      em.set_footer(text=f"shared from {original_guild.name}")
 
     # add items
     sql = "SELECT * FROM list_items WHERE list_id = ? AND is_archived = 0;"
@@ -159,7 +161,7 @@ class ListCog(CustomCog):
     em = discord.Embed(title="", description="")
 
     # find list id 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -243,7 +245,7 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(embed=em, ephemeral=list_is_public==False)
 
   @discord.app_commands.command(name="list_new")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_new(self,  interaction : discord.Interaction, list_name : str):
     em = discord.Embed(title="", description="")
     
@@ -254,7 +256,7 @@ class ListCog(CustomCog):
     list_name = self.__sanitize_list_name(list_name)
 
     # check there is no other list already existing with the given name
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
     
     if list_id != None:
       database.ConnectionPool.release(con)
@@ -274,12 +276,12 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(embed=em, ephemeral=True)
 
   @discord.app_commands.command(name="list_delete")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_delete(self,  interaction : discord.Interaction, list_name : str):
     em = discord.Embed(title="", description="")
     
 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -301,7 +303,7 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(embed=em, ephemeral=True)
 
   @discord.app_commands.command(name="list_index")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_index(self, interaction : discord.Interaction):
     em = discord.Embed(title="", description="")
 
@@ -310,9 +312,9 @@ class ListCog(CustomCog):
     con = database.ConnectionPool.get()
     cur = con.cursor()
 
-    sql = "SELECT * FROM lists WHERE discord_guild_id = ? AND (discord_user_id = ? OR is_public = TRUE) AND is_archived = 0;"
+    sql = "SELECT l.* FROM lists l LEFT JOIN list_guilds lg ON l.id = lg.list_id WHERE (l.discord_guild_id = ? OR lg.discord_guild_id = ?)  AND (l.discord_user_id = ? OR l.is_public = TRUE) AND is_archived = 0;"
 
-    cur.execute(sql, [interaction.guild.id, interaction.user.id])
+    cur.execute(sql, [interaction.guild.id, interaction.guild.id, interaction.user.id])
 
     for row in cur.fetchall():
       list = TList()
@@ -324,12 +326,12 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(embed=em, ephemeral=True)
 
   @discord.app_commands.command(name="list_is_public")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_is_public(self, interaction : discord.Interaction, list_name : str, is_public : bool):
     em = discord.Embed(title="", description="")
     
     # find list id
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -350,19 +352,19 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_detail")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_detail(self, interaction : discord.Interaction, list_name : str):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_export")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_export(self, interaction : discord.Interaction, list_name : str, format : Literal["csv"] = "csv"):
     em = discord.Embed(title="", description="")
     
     list_name = self.__sanitize_list_name(list_name)
     
     # serach list by name
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -403,14 +405,14 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(file=file, ephemeral=list.is_public==False)
 
   @discord.app_commands.command(name="list_item")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_item(self, interaction : discord.Interaction, list_name : str, item_content : str):
     em = discord.Embed(title="", description="")
 
     # search list by name    
     list_name = self.__sanitize_list_name(list_name)
 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -428,7 +430,7 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_item_content")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_item_content(self, interaction : discord.Interaction, list_name : str, item_position : int, item_content : str):
     em = discord.Embed(title="", description="")
 
@@ -442,7 +444,7 @@ class ListCog(CustomCog):
     cur = con.cursor()
     
     # find list id 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       database.ConnectionPool.release(con)
@@ -469,7 +471,7 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_item_identity")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_item_identity(self, interaction : discord.Interaction, list_name : str, item_position : int, item_kind : Literal[
     constants.ListItemKind.NORMAL.display, # type: ignore  
     constants.ListItemKind.MOVIE.display, # type: ignore
@@ -479,9 +481,9 @@ class ListCog(CustomCog):
     em = discord.Embed(title="", description="")
     
     # find list id 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -515,12 +517,12 @@ class ListCog(CustomCog):
     return await self.__item_detail(interaction, list_name, item_position)
 
   @discord.app_commands.command(name="unlist_item")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def unlist_item(self, interaction : discord.Interaction, list_name : str, item_position : int):
     em = discord.Embed(title="", description="")
 
     # find list id 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -550,16 +552,16 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_item_detail")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_item_detail(self, interaction : discord.Interaction, list_name : str, item_position : int):
     return await self.__item_detail(interaction, list_name, item_position)
 
   @discord.app_commands.command(name="list_movie")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_movie(self, interaction : discord.Interaction, list_name : str, imdb_id : str):
     em = discord.Embed(title="", description="")
     
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -587,11 +589,11 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_random")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_random(self, interaction : discord.Interaction, list_name : str):
     em = discord.Embed(title="", description="")
     
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -618,11 +620,11 @@ class ListCog(CustomCog):
     return await self.__item_detail(interaction, list_name, item_position)
   
   @discord.app_commands.command(name="list_book")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_book(self, interaction : discord.Interaction, list_name : str, book_id : str):
     em = discord.Embed(title="", description="")
     
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -650,12 +652,12 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_item_archive")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_item_archive(self, interaction : discord.Interaction, list_name : str, item_position : int):
     em = discord.Embed(title="", description="")
 
     # find list id 
-    list_id = self.__get_list_id_by_name(interaction, list_name)
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:
       em.description = f"No known list \"{list_name}\""
@@ -683,6 +685,69 @@ class ListCog(CustomCog):
     self.__order_list_by_position(list_id)
 
     return await self.__list_detail(interaction, list_name)
+  
+  @discord.app_commands.command(name="list_server_share")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  async def list_item_share(self, interaction : discord.Interaction, list_name : str, shared_discord_guild_id : str):
+    em = discord.Embed(title="", description="")
+
+    # find list id 
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # check if the guild id is valid 
+    guild = await self.bot.fetch_guild(shared_discord_guild_id)
+
+    if guild == None:
+      em.description = f"No known guild with id \"{shared_discord_guild_id}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # check haruko is a member of the server
+    if shared_discord_guild_id in self.bot.guilds:
+      em.description = f"Haruko is not a member of \"{guild.name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # check the user is a member of it
+    print("guild members: ", [m.id for m in guild.members])
+    if interaction.user.id in [m.id for m in guild.members]:
+      em.description = f"You are not a member of \"{guild.name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # if the list is not shared with this server already, share it, otherwhise unshare it
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    sql = "SELECT * FROM list_guilds WHERE list_id = ?;"
+
+    cur.execute(sql, [list_id])
+
+    row = cur.fetchone()
+
+    if row == None: 
+      em.description = f"{list_name} is now shared with server {guild.name}"
+
+      # check the name is available
+      if self.__get_list_id_by_name(list_name, shared_discord_guild_id, interaction.user.id) != None:
+        database.ConnectionPool.release(con)
+        em.description = f"The name \"{list_name}\" is not available"
+        return await interaction.response.send_message(embed=em, ephemeral=True)
+      
+      sql = "INSERT INTO list_guilds(list_id, discord_user_id, discord_guild_id) VALUES(?, ?, ?);"
+      cur.execute(sql, [list_id, interaction.user.id, shared_discord_guild_id])
+    
+    else:
+      em.description = f"{list_name} is no longer shared with server {guild.name}"
+      sql = "DELETE FROM list_guilds WHERE list_id=? AND discord_guild_id=?;"
+      cur.execute(sql, [list_id, shared_discord_guild_id])
+
+    con.commit()
+
+    database.ConnectionPool.release(con)
+
+    return await interaction.response.send_message(embed=em, ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(ListCog(bot))

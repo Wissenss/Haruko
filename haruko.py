@@ -39,7 +39,7 @@ async def setup_hook():
     await bot.load_extension("cogs.listCog")
 
     print("  syncing guilds ... ")
-    for guild_id in [constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, constants.ROLLING_WAVES_REPUBLIC_GUILD_ID, constants.THE_SERVER_GUILD_ID]:
+    for guild_id in [constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, constants.ROLLING_WAVES_REPUBLIC_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID]:
         try:
             await bot.tree.sync(guild=discord.Object(id=guild_id))
             print(f"    guild {guild_id}: Success")
