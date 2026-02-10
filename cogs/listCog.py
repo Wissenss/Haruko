@@ -303,7 +303,7 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(embed=em, ephemeral=True)
 
   @discord.app_commands.command(name="list_index")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_index(self, interaction : discord.Interaction):
     em = discord.Embed(title="", description="")
 
@@ -326,7 +326,7 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(embed=em, ephemeral=True)
 
   @discord.app_commands.command(name="list_is_public")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_is_public(self, interaction : discord.Interaction, list_name : str, is_public : bool):
     em = discord.Embed(title="", description="")
     
@@ -352,12 +352,12 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_detail")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_detail(self, interaction : discord.Interaction, list_name : str):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_export")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_export(self, interaction : discord.Interaction, list_name : str, format : Literal["csv"] = "csv"):
     em = discord.Embed(title="", description="")
     
@@ -405,7 +405,7 @@ class ListCog(CustomCog):
     return await interaction.response.send_message(file=file, ephemeral=list.is_public==False)
 
   @discord.app_commands.command(name="list_item")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_item(self, interaction : discord.Interaction, list_name : str, item_content : str):
     em = discord.Embed(title="", description="")
 
@@ -517,7 +517,7 @@ class ListCog(CustomCog):
     return await self.__item_detail(interaction, list_name, item_position)
 
   @discord.app_commands.command(name="unlist_item")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def unlist_item(self, interaction : discord.Interaction, list_name : str, item_position : int):
     em = discord.Embed(title="", description="")
 
@@ -552,12 +552,12 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_item_detail")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_item_detail(self, interaction : discord.Interaction, list_name : str, item_position : int):
     return await self.__item_detail(interaction, list_name, item_position)
 
   @discord.app_commands.command(name="list_movie")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_movie(self, interaction : discord.Interaction, list_name : str, imdb_id : str):
     em = discord.Embed(title="", description="")
     
@@ -589,7 +589,7 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_random")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_random(self, interaction : discord.Interaction, list_name : str):
     em = discord.Embed(title="", description="")
     
@@ -620,7 +620,7 @@ class ListCog(CustomCog):
     return await self.__item_detail(interaction, list_name, item_position)
   
   @discord.app_commands.command(name="list_book")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_book(self, interaction : discord.Interaction, list_name : str, book_id : str):
     em = discord.Embed(title="", description="")
     
@@ -652,7 +652,7 @@ class ListCog(CustomCog):
     return await self.__list_detail(interaction, list_name)
 
   @discord.app_commands.command(name="list_item_archive")
-  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID, constants.KUVA_GUILD_ID)
   async def list_item_archive(self, interaction : discord.Interaction, list_name : str, item_position : int):
     em = discord.Embed(title="", description="")
 

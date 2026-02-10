@@ -2,6 +2,8 @@
 
 The Server Humble Assistant.
 
+current production invite link: https://discord.com/oauth2/authorize?client_id=1212204056613888011 
+
 ## Discord intents and permissions
 
 The bot requires the following intents to be enabled in applications console:

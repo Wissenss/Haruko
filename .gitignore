@@ -6,3 +6,12 @@ venv/
 *.sqlite3
 *.exe
 *.sqlite
+
+# production environment specific ignores
+bin/
+dbmate
+lib/
+lib64
+pyvenv.cfg
+start.sh
+start_web.sh
