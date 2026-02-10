@@ -13,6 +13,10 @@ html, body
     list-style-position: inside;
     font-size: 1.25rem; 
   }
+
+  button {
+    font-size: 1.5rem;
+  }
 }
 
 /* desktop */
@@ -24,5 +28,9 @@ html, body
   ul, ol {
     list-style-position: inside;
     font-size: 1rem; 
+  }
+
+  button{
+    font-size: 1rem;
   }
 }

@@ -13,6 +13,7 @@
       {
         <!-- alert("correct answer!") -->
         document.getElementById("correct_dlg").showModal();
+        <!-- window.location = "{{ url_for('games_movie_plot', rs=right_score+1, ws=wrong_score)}}" -->
       }
       else
       {
@@ -25,7 +26,7 @@
   <body>
     <a href="{{ url_for('index')}}">[Index]</a>
     <!-- <p>Answer: {{ answer_md["original_title"] }} - Plot: {{ answer_md["overview"] }}</p> -->
-    <p>score: {{right_score}} / {{right_score + wrong_score}}</p>
+    <p>score: {{right_score}}</p>
     <h4>Plot:</h4>
 
     <p><i>"{{ answer_md["overview"] }}"</i></p>
@@ -51,8 +52,9 @@
     <dialog id="wrong_dlg">
       <p>Wrong!</p>
       <p>The movie is: <i>"{{answer_md['original_title']}}"</i></p>
+      <p>Final Score: {{right_score}}</p>
       <button onclick="window.location = '{{ url_for('index')}}'">Quit</button>
-      <button onclick="window.location = '{{ url_for('games_movie_plot', rs=right_score, ws=wrong_score+1)}}'">Next</button>
+      <button onclick="window.location = '{{ url_for('games_movie_plot')}}'">Try Again</button>
     </dialog>
   </body>
 </html>
