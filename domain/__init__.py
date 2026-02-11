@@ -105,7 +105,7 @@ class ListRepo:
     if include_archived == False:
       conditions += "AND is_archived == 0"
 
-    sql = f"SELECT * FROM list_items WHERE list_id = ? {conditions} ORDER BY position;"
+    sql = f"SELECT * FROM list_items WHERE list_id = ? {conditions} ORDER BY score DESC, position ASC;"
 
     cur.execute(sql, [list_id])
 

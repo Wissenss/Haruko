@@ -63,6 +63,16 @@ CREATE TABLE list_guilds (
     discord_guild_id INTEGER,
     FOREIGN KEY (list_id) REFERENCES lists(id)
 );
+CREATE TABLE list_item_votes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  list_item_id INTEGER,
+  discord_user_id INTEGER,
+  discord_guild_id INTEGER,
+  web_fingerprint TEXT,
+  created_at TEXT,
+  vote_value INTEGER,
+  FOREIGN KEY (list_item_id) REFERENCES list_items(id)
+);
 -- Dbmate schema migrations
 INSERT INTO "migrations" (version) VALUES
   ('20250717070747'),
@@ -70,4 +80,5 @@ INSERT INTO "migrations" (version) VALUES
   ('20260125032850'),
   ('20260126014605'),
   ('20260202043807'),
-  ('20260209181253');
+  ('20260209181253'),
+  ('20260211161718');

@@ -146,14 +146,14 @@ class ListCog(CustomCog):
       em.set_footer(text=f"shared from {original_guild.name}")
 
     # add items
-    sql = "SELECT * FROM list_items WHERE list_id = ? AND is_archived = 0;"
+    sql = f"SELECT * FROM list_items WHERE list_id = ? AND is_archived = 0 ORDER BY position ASC;"
 
     cur.execute(sql, [list_id])
 
-    for row in cur.fetchall():
+    for i, row in enumerate(cur.fetchall()):
       item = TListItem()
       item.map_from_record(row)
-      em.description += f"\n {str(item.position).rjust(4)} - {item.content}"
+      em.description += f"\n {str(item.position).rjust(4)} - {item.content} ({item.score})"
 
     return await interaction.response.send_message(embed=em, ephemeral=list.is_public==False)    
 
@@ -688,7 +688,7 @@ class ListCog(CustomCog):
   
   @discord.app_commands.command(name="list_server_share")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
-  async def list_item_share(self, interaction : discord.Interaction, list_name : str, shared_discord_guild_id : str):
+  async def list_server_share(self, interaction : discord.Interaction, list_name : str, shared_discord_guild_id : str):
     em = discord.Embed(title="", description="")
 
     # find list id 
@@ -748,6 +748,124 @@ class ListCog(CustomCog):
     database.ConnectionPool.release(con)
 
     return await interaction.response.send_message(embed=em, ephemeral=True)
+
+  @discord.app_commands.command(name="list_item_upvote")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  async def list_item_upvote(self, interaction : discord.Interaction, list_name : str, item_position : int):
+    em = discord.Embed(title="", description="")
+
+    # find list id 
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    # find item id
+    item_id = self.__get_item_id_by_position(list_id, item_position)
+
+    if item_id == None:
+      em.description = f"No item with position {item_position} on list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    # delete previous votes (if any). only one vote per user!
+    sql = "DELETE FROM list_item_votes WHERE list_item_id = ? AND discord_user_id = ? AND discord_guild_id = ?;"
+
+    cur.execute(sql, [item_id, interaction.user.id, interaction.guild.id])
+
+    # do vote
+    sql = "INSERT INTO list_item_votes(list_item_id, discord_user_id, discord_guild_id, web_fingerprint, created_at, vote_value) VALUES(?, ?, ?, NULL, datetime('now'), 1);"
+
+    cur.execute(sql, [item_id, interaction.user.id, interaction.guild.id])
+
+    # update score count
+    sql = "UPDATE list_items SET score = COALESCE((SELECT SUM(vote_value) FROM list_item_votes WHERE list_item_id = ?), 0) WHERE id = ?;"
+
+    cur.execute(sql, [item_id, item_id])
+
+    con.commit()
+
+    return await self.__list_detail(interaction, list_name)
+
+  @discord.app_commands.command(name="list_item_downvote")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  async def list_item_downvote(self, interaction : discord.Interaction, list_name : str, item_position : int):
+    em = discord.Embed(title="", description="")
+
+    # find list id 
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    # find item id
+    item_id = self.__get_item_id_by_position(list_id, item_position)
+
+    if item_id == None:
+      em.description = f"No item with position {item_position} on list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    # delete previous votes (if any). only one vote per user!
+    sql = "DELETE FROM list_item_votes WHERE list_item_id = ? AND discord_user_id = ? AND discord_guild_id = ?;"
+
+    cur.execute(sql, [item_id, interaction.user.id, interaction.guild.id])
+
+    # do vote
+    sql = "INSERT INTO list_item_votes(list_item_id, discord_user_id, discord_guild_id, web_fingerprint, created_at, vote_value) VALUES(?, ?, ?, NULL, datetime('now'), -1);"
+
+    cur.execute(sql, [item_id, interaction.user.id, interaction.guild.id])
+
+    # update score count
+    sql = "UPDATE list_items SET score = COALESCE((SELECT SUM(vote_value) FROM list_item_votes WHERE list_item_id = ?), 0) WHERE id = ?;"
+
+    cur.execute(sql, [item_id, item_id])
+
+    con.commit()
+
+    return await self.__list_detail(interaction, list_name)
+
+  @discord.app_commands.command(name="list_item_unvote")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  async def list_item_unvote(self, interaction : discord.Interaction, list_name : str, item_position : int):
+    em = discord.Embed(title="", description="")
+
+    # find list id 
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+  
+    # find item id
+    item_id = self.__get_item_id_by_position(list_id, item_position)
+
+    if item_id == None:
+      em.description = f"No item with position {item_position} on list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+  
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    # delete previous votes (if any)
+    sql = "DELETE FROM list_item_votes WHERE list_item_id = ? AND discord_user_id = ? AND discord_guild_id = ?;"
+
+    cur.execute(sql, [item_id, interaction.user.id, interaction.guild.id])
+
+    # update score count
+    sql = "UPDATE list_items SET score = COALESCE((SELECT SUM(vote_value) FROM list_item_votes WHERE list_item_id = ?), 0) WHERE id = ?;"
+
+    cur.execute(sql, [item_id, item_id])
+
+    con.commit()
+
+    return await self.__list_detail(interaction, list_name)
 
 async def setup(bot):
     await bot.add_cog(ListCog(bot))
