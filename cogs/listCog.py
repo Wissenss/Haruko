@@ -363,7 +363,7 @@ class ListCog(CustomCog):
     
     list_name = self.__sanitize_list_name(list_name)
     
-    # serach list by name
+    # search list by name
     list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
 
     if list_id == None:

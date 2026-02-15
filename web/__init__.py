@@ -1,12 +1,8 @@
 from typing import List
+import io
 import random
 import re
-from flask import Flask
-from flask import g
-from flask import render_template
-from flask import url_for
-from flask import redirect
-from flask import request
+from flask import Flask, g, render_template, url_for, redirect, request, send_file
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -70,6 +66,34 @@ def list_detail(id : int):
   list_items : List[domain.TListItem] = domain.ListRepo.get_list_items_by_list_id(con, list.id)
 
   return render_template("list_detail.html", list=list, list_items=list_items)
+
+@app.route("/list/<int:list_id>/export")
+def list_detail_export(list_id : int):
+  con = get_db()
+
+  list : domain.TList = domain.ListRepo.get_list_by_id(con, list_id)
+
+  if list == None:
+    return "<p>404: not found</p>"
+
+  if list.is_public == False:
+    return "<p>403: forbidden</p>"
+  
+  list_items : List[domain.TListItem] = domain.ListRepo.get_list_items_by_list_id(con, list.id)
+
+  contents = "index,content,score,created_at,updated_at,is_archived,archived_at"
+
+  for i in list_items:
+    contents += f"\n{i.position},\"{i.content}\",{i.score},{i.created_at},{i.updated_at},{i.is_archived},{i.archived_at}"
+
+  file = io.BytesIO(contents.encode("utf-8"))
+  file.seek(0)
+
+  return send_file(file, mimetype="text/csv", download_name=f"{list.name}.csv")
+
+@app.route("/api/list/<int:id>")
+def api_list_detail():
+  pass
 
 @app.route("/list/<int:list_id>/item/<int:id>")
 def list_item_detail(list_id : int, id : int):
