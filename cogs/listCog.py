@@ -685,7 +685,7 @@ class ListCog(CustomCog):
     self.__order_list_by_position(list_id)
 
     return await self.__list_detail(interaction, list_name)
-  
+
   @discord.app_commands.command(name="list_server_share")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
   async def list_server_share(self, interaction : discord.Interaction, list_name : str, shared_discord_guild_id : str):

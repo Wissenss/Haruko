@@ -2,7 +2,7 @@ from typing import List
 import io
 import random
 import re
-from flask import Flask, g, render_template, url_for, redirect, request, send_file
+from flask import Flask, g, render_template, url_for, redirect, request, send_file, jsonify
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -93,7 +93,19 @@ def list_detail_export(list_id : int):
 
 @app.route("/api/list/<int:id>")
 def api_list_detail():
-  pass
+  con = get_db()
+
+  list : domain.TList = domain.ListRepo.get_list_by_id(con, id)
+
+  if list == None:
+    return {"error": "not found"}, 404
+
+  if list.is_public == False:
+    return {"error": "forbidden"}, 403
+
+  list_items : List[domain.TListItem] = domain.ListRepo.get_list_items_by_list_id(con, list.id)
+
+  return jsonify(list_items)
 
 @app.route("/list/<int:list_id>/item/<int:id>")
 def list_item_detail(list_id : int, id : int):
