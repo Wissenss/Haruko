@@ -79,7 +79,7 @@ class ListCog(CustomCog):
       
       item.map_from_record(row)
 
-      sql = "UPDATE list_items SET position = ?, updated_at = datetieme('now') WHERE id = ?;"
+      sql = "UPDATE list_items SET position = ?, updated_at = datetime('now') WHERE id = ?;"
 
       cur.execute(sql, [i, item.id])
     
@@ -674,7 +674,7 @@ class ListCog(CustomCog):
     con = database.create_connection()
     cur = con.cursor()
 
-    sql = "UPDATE list_items SET is_archived = 1, archived_at = datetime('now'), updated_at = datetime('now') position = 0 WHERE id = ?;"
+    sql = "UPDATE list_items SET is_archived = 1, archived_at = datetime('now'), updated_at = datetime('now'), position = 0 WHERE id = ?;"
 
     cur.execute(sql, [item_id])
 
