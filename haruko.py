@@ -37,6 +37,7 @@ async def setup_hook():
     await bot.load_extension("cogs.triviaCog")
     await bot.load_extension("cogs.economyCog")
     await bot.load_extension("cogs.listCog")
+    await bot.load_extension("cogs.wissensCog")
 
     print("  syncing guilds ... ")
     for guild_id in [constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.BUTTHOLE_LOVERS_GUILD_ID, constants.ROLLING_WAVES_REPUBLIC_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID]:

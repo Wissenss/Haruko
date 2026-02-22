@@ -14,5 +14,8 @@ OMDB_KEY = get_environment_var("OMDB_KEY")
 TMDB_KEY = get_environment_var("TMDB_KEY")
 WEB_ADDR = get_environment_var("WEB_ADDR", "http://localhost:5000")
 
+TAKKUN_ADDR = get_environment_var("TAKKUN_ADDR", "http://localhost:5001")
+TAKKUN_KEY = get_environment_var("TAKKUN_KEY", "")
+
 if __name__ == "__main__":
     print(environment_vars)
