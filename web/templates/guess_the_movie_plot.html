@@ -1,60 +1,392 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Haruko — Guess The Movie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Lora:ital@1&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<html>
-  <head>
-    <title>Haruko - Guess The Movie Plot</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
-  </head>
+    :root {
+      --bg:           #FAFAF8;
+      --surface:      #FFFFFF;
+      --border:       #E5E4DF;
+      --border-hover: #C8C7C0;
+      --text-1:       #111110;
+      --text-2:       #706F6C;
+      --text-3:       #A3A29E;
+      --green:        #16A34A;
+      --green-bg:     #F0FDF4;
+      --green-border: #BBF7D0;
+      --red:          #DC2626;
+      --red-bg:       #FEF2F2;
+      --red-border:   #FECACA;
+      --radius:       12px;
+      --radius-sm:    8px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-1);
+      text-decoration: none;
+    }
+
+    .nav-sep { color: var(--border); font-size: 18px; }
+
+    .nav-page {
+      font-size: 13px;
+      color: var(--text-2);
+    }
+
+    .score-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-2);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-weight: 400;
+    }
+
+    .score-badge span {
+      color: var(--text-1);
+      font-weight: 500;
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 52px 24px 80px;
+      width: 100%;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 14px;
+    }
+
+    /* ── Plot card ── */
+    .plot-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 36px;
+      margin-bottom: 44px;
+    }
+
+    .plot-text {
+      font-family: 'Lora', Georgia, serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 19px;
+      line-height: 1.75;
+      color: var(--text-1);
+    }
+
+    /* ── Question heading ── */
+    .question-heading {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-2);
+      margin-bottom: 20px;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Movie grid ── */
+    .movie-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .movie-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+      text-align: center;
+      padding-bottom: 16px;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .movie-card:hover {
+      border-color: var(--text-1);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.08);
+    }
+
+    .movie-card:active {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+
+    .movie-poster {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+      background: var(--border);
+    }
+
+    .movie-info {
+      padding: 12px 12px 0;
+    }
+
+    .movie-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-1);
+      line-height: 1.35;
+      margin-bottom: 3px;
+    }
+
+    .movie-year {
+      font-size: 12px;
+      color: var(--text-3);
+    }
+
+    /* ── Dialogs ── */
+    dialog {
+      border: none;
+      border-radius: var(--radius);
+      padding: 0;
+      max-width: 380px;
+      width: calc(100% - 48px);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.14);
+      outline: none;
+    }
+
+    dialog::backdrop {
+      background: rgba(17,17,16,0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .dialog-inner {
+      padding: 32px;
+    }
+
+    .dialog-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 20px;
+    }
+
+    .dialog-tag.correct {
+      background: var(--green-bg);
+      color: var(--green);
+      border: 1px solid var(--green-border);
+    }
+
+    .dialog-tag.wrong {
+      background: var(--red-bg);
+      color: var(--red);
+      border: 1px solid var(--red-border);
+    }
+
+    .dialog-title {
+      font-size: 21px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      color: var(--text-1);
+    }
+
+    .dialog-body {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .dialog-body em {
+      color: var(--text-1);
+      font-style: italic;
+    }
+
+    .dialog-body .final-score {
+      display: block;
+      margin-top: 8px;
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--text-1);
+      letter-spacing: -0.03em;
+    }
+
+    .dialog-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      color: var(--text-1);
+      transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+      letter-spacing: -0.01em;
+    }
+
+    .btn:hover {
+      border-color: var(--border-hover);
+      background: var(--bg);
+    }
+
+    .btn-primary {
+      background: var(--text-1);
+      color: #FAFAF8;
+      border-color: var(--text-1);
+    }
+
+    .btn-primary:hover {
+      opacity: 0.82;
+      background: var(--text-1);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      main { padding: 32px 16px 60px; }
+      .plot-card { padding: 24px 20px; }
+      .plot-text { font-size: 16px; }
+      .movie-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-left">
+      <a href="{{ url_for('index')}}" class="logo">Haruko</a>
+      <span class="nav-sep">›</span>
+      <span class="nav-page">Guess the Movie</span>
+    </div>
+    <div class="score-badge">Score <span>{{right_score}}</span></div>
+  </header>
+
+  <main>
+    <p class="section-label">Plot</p>
+    <div class="plot-card">
+      <p class="plot-text">"{{ answer_md["overview"] }}"</p>
+    </div>
+
+    <p class="question-heading">Which movie is this from?</p>
+
+    <div class="movie-grid">
+      {% for c_md in choices_md %}
+      <div class="movie-card" onclick="choice({{c_md['id']}})">
+        <img
+          class="movie-poster"
+          src="https://image.tmdb.org/t/p/w200/{{c_md['poster_path']}}"
+          alt="{{ c_md['original_title'] }}"
+          loading="lazy"
+        />
+        <div class="movie-info">
+          <p class="movie-title">{{ c_md['original_title'] }}</p>
+          <p class="movie-year">{{c_md['release_date'][:4]}}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </main>
+
+  <!-- Correct dialog -->
+  <dialog id="correct_dlg">
+    <div class="dialog-inner">
+      <span class="dialog-tag correct">Correct</span>
+      <h2 class="dialog-title">Nice one.</h2>
+      <p class="dialog-body">The movie was <em>"{{answer_md['original_title']}}"</em>.</p>
+      <div class="dialog-actions">
+        <button class="btn" onclick="window.location = '{{ url_for('index')}}'">Quit</button>
+        <button class="btn btn-primary" onclick="window.location = '{{ url_for('games_movie_plot', rs=right_score+1, ws=wrong_score)}}'">Next →</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Wrong dialog -->
+  <dialog id="wrong_dlg">
+    <div class="dialog-inner">
+      <span class="dialog-tag wrong">Wrong</span>
+      <h2 class="dialog-title">Not quite.</h2>
+      <p class="dialog-body">
+        It was <em>"{{answer_md['original_title']}}"</em>.
+        <span class="final-score">{{right_score}} correct</span>
+      </p>
+      <div class="dialog-actions">
+        <button class="btn" onclick="window.location = '{{ url_for('index')}}'">Quit</button>
+        <button class="btn btn-primary" onclick="window.location = '{{ url_for('games_movie_plot')}}'">Try Again</button>
+      </div>
+    </div>
+  </dialog>
 
   <script>
-    function choice(choice_id)
-    {
-      if (choice_id === {{ answer_md['id'] }})
-      {
-        <!-- alert("correct answer!") -->
+    function choice(choice_id) {
+      if (choice_id === {{ answer_md['id'] }}) {
         document.getElementById("correct_dlg").showModal();
-        <!-- window.location = "{{ url_for('games_movie_plot', rs=right_score+1, ws=wrong_score)}}" -->
-      }
-      else
-      {
-        <!-- alert("wrong answer!") -->
+      } else {
         document.getElementById("wrong_dlg").showModal();
       }
     }
   </script>
 
-  <body>
-    <a href="{{ url_for('index')}}">[Index]</a>
-    <!-- <p>Answer: {{ answer_md["original_title"] }} - Plot: {{ answer_md["overview"] }}</p> -->
-    <p>score: {{right_score}}</p>
-    <h4>Plot:</h4>
-
-    <p><i>"{{ answer_md["overview"] }}"</i></p>
-
-    <h4>Which movie is this from?</h4>
-
-    <div style="display: flex;">
-      {% for c_md in choices_md %}
-      <button onclick="choice({{c_md['id']}});" style="display: flex; flex-direction: column; align-items: center;">
-        <img src="https://image.tmdb.org/t/p/w200/{{c_md['poster_path']}}" style="max-height: 250px; max-width: 150px;"/>
-        <p>{{ c_md['original_title'] }} ({{c_md['release_date'][:4]}})</p>
-      </button>
-      {% endfor %}
-    </div>
-
-    <dialog id="correct_dlg">
-      <p>Correct!</p>
-      <p>The movie is: <i>"{{answer_md['original_title']}}"</i></p>
-      <button onclick="window.location = '{{ url_for('index')}}'">Quit</button>
-      <button onclick="window.location = '{{ url_for('games_movie_plot', rs=right_score+1, ws=wrong_score)}}'">Next</button>
-    </dialog>
-
-    <dialog id="wrong_dlg">
-      <p>Wrong!</p>
-      <p>The movie is: <i>"{{answer_md['original_title']}}"</i></p>
-      <p>Final Score: {{right_score}}</p>
-      <button onclick="window.location = '{{ url_for('index')}}'">Quit</button>
-      <button onclick="window.location = '{{ url_for('games_movie_plot')}}'">Try Again</button>
-    </dialog>
-  </body>
+</body>
 </html>
