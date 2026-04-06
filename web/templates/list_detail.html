@@ -1,51 +1,321 @@
 <!DOCTYPE html>
-<html>
-  
-  <head>
-    <title>Haruko - {{list.name}}</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
-  </head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Haruko — {{list.name}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <body>
-    <a href="{{ url_for('list_index')}}">[List Index]</a>
+    :root {
+      --bg:           #FAFAF8;
+      --surface:      #FFFFFF;
+      --border:       #E5E4DF;
+      --border-hover: #C8C7C0;
+      --text-1:       #111110;
+      --text-2:       #706F6C;
+      --text-3:       #A3A29E;
+      --radius:       12px;
+      --radius-sm:    8px;
+    }
 
-    <h1>{{list.name}}</h1>
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-    <ol>
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-1);
+      text-decoration: none;
+    }
+
+    .nav-sep { color: var(--border); font-size: 16px; }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--text-2);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+    .breadcrumb:hover { color: var(--text-1); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 400;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-2);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.12s, color 0.12s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--border-hover);
+      color: var(--text-1);
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      width: 100%;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      color: var(--text-1);
+      margin-bottom: 32px;
+      line-height: 1.2;
+    }
+
+    /* ── Items list ── */
+    .items-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 48px;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      transition: border-color 0.12s, box-shadow 0.12s;
+      text-decoration: none;
+      color: var(--text-1);
+    }
+
+    .item-row:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .item-rank {
+      font-size: 12px;
+      color: var(--text-3);
+      min-width: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .item-name {
+      flex: 1;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--text-1);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .item-score {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-3);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      padding: 48px 0;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 14px;
+    }
+
+    /* ── Archived section ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .section-divider {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .archived-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .archived-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 11px 18px;
+      border-radius: var(--radius-sm);
+      transition: background 0.12s;
+    }
+
+    .archived-row:hover {
+      background: var(--surface);
+    }
+
+    .archived-name {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-3);
+      font-style: italic;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .archived-date {
+      font-size: 12px;
+      color: var(--text-3);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      main { padding: 32px 16px 60px; }
+      .page-title { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-left">
+      <a href="{{ url_for('index')}}" class="logo">Haruko</a>
+      <span class="nav-sep">›</span>
+      <a href="{{ url_for('list_index')}}" class="breadcrumb">Lists</a>
+      <span class="nav-sep">›</span>
+      <span class="breadcrumb" style="color:var(--text-1)">{{list.name}}</span>
+    </div>
+    <div class="nav-actions">
+      <a href="{{ url_for('list_item_random', list_id=list.id)}}" class="action-btn">Random</a>
+      <a href="{{ url_for('list_detail_export', list_id=list.id)}}" class="action-btn">Export</a>
+    </div>
+  </header>
+
+  <main>
+    <h1 class="page-title">{{list.name}}</h1>
+
+    <ol class="items-list">
+      {% set active_items = [] %}
       {% for item in list_items %}
         {% if item.is_archived == false %}
-          <li><a href="{{ url_for('list_item_detail', list_id=list.id, id=item.id) }}">{{ item.content }} ({{ item.score }})</a></li>
+          {% set _ = active_items.append(item) %}
         {% endif %}
       {% endfor %}
+
+      {% if active_items %}
+        {% for item in active_items %}
+        <li>
+          <a href="{{ url_for('list_item_detail', list_id=list.id, id=item.id) }}" class="item-row">
+            <span class="item-rank">{{loop.index}}</span>
+            <span class="item-name">{{ item.content }}</span>
+            <span class="item-score">{{ item.score }}</span>
+          </a>
+        </li>
+        {% endfor %}
+      {% else %}
+        <li class="empty-state">No items yet.</li>
+      {% endif %}
     </ol>
 
-    <a href="{{ url_for('list_item_random', list_id=list.id)}}">[Random]</a>
-    <a href="{{ url_for('list_detail_export', list_id=list.id)}}">[Export]</a>
+    <div class="section-header">
+      <span class="section-label">Archived</span>
+      <div class="section-divider"></div>
+    </div>
 
-    <h3>Archived</h3>
-
-    <ul>
+    <ul class="archived-list">
+      {% set has_archived = [] %}
       {% for item in list_items %}
         {% if item.is_archived == true %}
-          <li>
-            [
-            <time class="utc-date" datetime="{{ item.archived_at }}Z">
-              {{ item.archived_at }}
-            </time>
-            ]
-            <i>{{ item.content }}</i>
+          {% set _ = has_archived.append(1) %}
+          <li class="archived-row">
+            <span class="archived-name">{{ item.content }}</span>
+            <time class="archived-date utc-date" datetime="{{ item.archived_at }}Z">{{ item.archived_at }}</time>
           </li>
         {% endif %}
       {% endfor %}
+      {% if not has_archived %}
+        <li style="padding:12px 18px;font-size:13px;color:var(--text-3);font-style:italic">Nothing archived yet.</li>
+      {% endif %}
     </ul>
-  </body>
+  </main>
 
   <script>
     document.querySelectorAll("time.utc-date").forEach(el => {
       const date = new Date(el.dateTime);
-
       if (isNaN(date)) return;
-
       el.textContent = new Intl.DateTimeFormat(undefined, {
         dateStyle: "medium",
         timeStyle: "short"
@@ -53,4 +323,5 @@
     });
   </script>
 
+</body>
 </html>
