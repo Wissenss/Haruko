@@ -201,6 +201,11 @@
       width: calc(100% - 48px);
       box-shadow: 0 24px 64px rgba(0,0,0,0.14);
       outline: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      margin: 0;
     }
 
     dialog::backdrop {
@@ -379,6 +384,10 @@
   </dialog>
 
   <script>
+    document.querySelectorAll('.plot-text').forEach(el => {
+      el.textContent = el.textContent.replace(/#{2,}/g, '...');
+    });
+
     function choice(choice_id) {
       if (choice_id === {{ answer_md['id'] }}) {
         document.getElementById("correct_dlg").showModal();
