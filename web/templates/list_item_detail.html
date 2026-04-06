@@ -1,25 +1,200 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Haruko — {{list_item.content}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Lora:ital@1&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<html>
-  
-  <head>
-    <title>Haruko - Item {{list_item.id}}</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
-  </head>
+    :root {
+      --bg:           #FAFAF8;
+      --surface:      #FFFFFF;
+      --border:       #E5E4DF;
+      --border-hover: #C8C7C0;
+      --text-1:       #111110;
+      --text-2:       #706F6C;
+      --text-3:       #A3A29E;
+      --radius:       12px;
+      --radius-sm:    8px;
+    }
 
-  <body>
-    <a href="{{ url_for('list_detail', id=list.id)}}">[{{list.name}}]</a>
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-    <h1>{{list_item.content}}</h1>
+    header {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-    <!-- movie metadata -->
-    
+    .nav-left { display: flex; align-items: center; gap: 14px; }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-1);
+      text-decoration: none;
+    }
+
+    .nav-sep { color: var(--border); font-size: 16px; }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--text-2);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+    .breadcrumb:hover { color: var(--text-1); }
+    .breadcrumb.current { color: var(--text-1); }
+
+    main {
+      flex: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      width: 100%;
+    }
+
+    /* ── Generic item (non-movie) ── */
+    .item-title {
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      color: var(--text-1);
+      line-height: 1.2;
+    }
+
+    /* ── Movie item layout ── */
+    .movie-card {
+      display: flex;
+      gap: 28px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      align-items: flex-start;
+    }
+
+    .movie-poster {
+      width: 130px;
+      flex-shrink: 0;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: var(--border);
+      aspect-ratio: 2/3;
+    }
+
+    .movie-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .movie-meta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .movie-title {
+      font-size: 22px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      color: var(--text-1);
+    }
+
+    .meta-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .meta-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-3);
+    }
+
+    .meta-value {
+      font-size: 14px;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+
+    .plot-text {
+      font-family: 'Lora', Georgia, serif;
+      font-style: italic;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-2);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 520px) {
+      main { padding: 32px 16px 60px; }
+      .movie-card { flex-direction: column; gap: 20px; }
+      .movie-poster { width: 100px; }
+      .movie-title { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-left">
+      <a href="{{ url_for('index')}}" class="logo">Haruko</a>
+      <span class="nav-sep">›</span>
+      <a href="{{ url_for('list_index')}}" class="breadcrumb">Lists</a>
+      <span class="nav-sep">›</span>
+      <a href="{{ url_for('list_detail', id=list.id)}}" class="breadcrumb">{{list.name}}</a>
+      <span class="nav-sep">›</span>
+      <span class="breadcrumb current">{{list_item.content}}</span>
+    </div>
+  </header>
+
+  <main>
     {% if list_item.kind.id == 3 %}
-    <img src="{{metadata['Poster']}}"/>
-    <p><b>Title: </b>{{metadata['Title']}}</p>
-    <p><b>Plot: </b>{{metadata['Plot']}}</p>
+      <!-- Movie item -->
+      <div class="movie-card">
+        <div class="movie-poster">
+          <img src="{{metadata['Poster']}}" alt="{{metadata['Title']}} poster"/>
+        </div>
+        <div class="movie-meta">
+          <h1 class="movie-title">{{metadata['Title']}}</h1>
+          <div class="meta-row">
+            <span class="meta-label">Plot</span>
+            <p class="plot-text">{{metadata['Plot']}}</p>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <!-- Generic item -->
+      <h1 class="item-title">{{list_item.content}}</h1>
     {% endif %}
+  </main>
 
-  </body>
-
+</body>
 </html>
