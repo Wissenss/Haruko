@@ -1,22 +1,160 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Haruko — Lists</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-<html>
-  
-  <head>
-    <title>Haruko - List Index</title>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
-  </head>
+    :root {
+      --bg:           #FAFAF8;
+      --surface:      #FFFFFF;
+      --border:       #E5E4DF;
+      --border-hover: #C8C7C0;
+      --text-1:       #111110;
+      --text-2:       #706F6C;
+      --text-3:       #A3A29E;
+      --radius:       12px;
+      --radius-sm:    8px;
+    }
 
-  <body>
-    <a href="{{ url_for('index')}}">[Index]</a>
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
 
-    <h1>List Index</h1>
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
 
-    <ol>
-      {% for l in lists %}
-      <li><a href="{{ url_for('list_detail', id=l.id) }}">{{ l.name }}</a></li>
-      {% endfor %}
+    .nav-left { display: flex; align-items: center; gap: 14px; }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-1);
+      text-decoration: none;
+    }
+
+    .nav-sep { color: var(--border); font-size: 16px; }
+
+    .breadcrumb {
+      font-size: 13px;
+      color: var(--text-1);
+    }
+
+    main {
+      flex: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px 80px;
+      width: 100%;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      color: var(--text-1);
+      margin-bottom: 32px;
+    }
+
+    .list-items {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .list-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      color: var(--text-1);
+      font-size: 14px;
+      transition: border-color 0.12s, box-shadow 0.12s;
+    }
+
+    .list-row:hover {
+      border-color: var(--border-hover);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .list-row-arrow {
+      color: var(--text-3);
+      font-size: 14px;
+      transition: transform 0.12s, color 0.12s;
+    }
+
+    .list-row:hover .list-row-arrow {
+      transform: translateX(3px);
+      color: var(--text-1);
+    }
+
+    .empty-state {
+      padding: 64px 0;
+      text-align: center;
+      color: var(--text-3);
+      font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+      main { padding: 32px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav-left">
+      <a href="{{ url_for('index')}}" class="logo">Haruko</a>
+      <span class="nav-sep">›</span>
+      <span class="breadcrumb">Lists</span>
+    </div>
+  </header>
+
+  <main>
+    <h1 class="page-title">Lists</h1>
+
+    <ol class="list-items">
+      {% if lists %}
+        {% for l in lists %}
+        <li>
+          <a href="{{ url_for('list_detail', id=l.id) }}" class="list-row">
+            <span>{{ l.name }}</span>
+            <span class="list-row-arrow">→</span>
+          </a>
+        </li>
+        {% endfor %}
+      {% else %}
+        <li class="empty-state">No lists yet.</li>
+      {% endif %}
     </ol>
-  </body>
+  </main>
 
+</body>
 </html>
