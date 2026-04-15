@@ -241,3 +241,7 @@ def games_movie_plot():
   answer_movie_details["overview"] = overview 
 
   return render_template("guess_the_movie_plot.html", answer_md=answer_movie_details, choices_md=choices_movie_details, right_score=right_score, wrong_score=wrong_score)
+
+@app.route("/contibutors")
+def contibutors_list():
+  return render_template("contributors.html");

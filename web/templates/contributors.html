@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Haruko — Guess The Movie</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Lora:ital@1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
+  <style>
+
+     /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      height: 56px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo {
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-1);
+      text-decoration: none;
+    }
+
+    .nav-sep { color: var(--border); font-size: 18px; }
+
+    .nav-page {
+      font-size: 13px;
+      color: var(--text-2);
+    }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 52px 24px 80px;
+      width: 100%;
+    }
+
+    .greeting {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 12px;
+    }
+
+    .page-title {
+      font-size: 30px;
+      font-weight: 500;
+      letter-spacing: -0.04em;
+      color: var(--text-1);
+      margin-bottom: 40px;
+      line-height: 1.15;
+    }
+
+    /* .section-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 14px;
+    } */
+
+
+    .contibutors-list {
+        max-width: 600px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+    }
+
+    .contributors-list-item {
+        display: grid;
+        grid-template-columns: auto;
+        grid-template-rows: auto auto auto;
+        max-width: 200px;
+        margin: auto;
+        text-align: center;
+        align-items: center;
+        gap: 10px;
+        padding: 24px;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        text-decoration: none;
+        color: var(--text-1);
+        transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+
+    .contributors-list-item-img {   
+        max-width: 100px;
+        max-height: 100px;
+        margin: auto;
+    }
+
+    .contributors-list-item-name {
+        font-size: small;
+    }
+
+    .contributors-list-item-quote {
+        font-style: italic;
+        font-size: small;
+    }
+  </style>
+</head>
+
+<body>
+    <header>
+    <div class="nav-left">
+      <a href="{{ url_for('index')}}" class="logo">Haruko</a>
+      <span class="nav-sep">›</span>
+      <span class="nav-page">Contributors</span>
+    </div>
+  </header>
+
+  <main>
+    <p class="greeting">Special thanks to</p>
+    <h1 class="page-title">The contributors of Haruko</h1>
+
+    <ul id="contibutors-list" class="contibutors-list">
+        <!-- 
+        
+        the following is how the item elements should be created to pupulate this list. This is handled on the init() function
+
+        <a class="contributors-list-item" href="https://github.com/Wissenss/Haruko" target="_blank">
+            <img class="contributors-list-item-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAARVBMVEX6+vqPj4/////l5eWMjIyIiIj19fWCgoKVlZXGxsaYmJiSkpKxsbG3t7fp6eny8vKkpKS+vr7Nzc2qqqrf39/X19eenp7INw94AAAC6UlEQVR4nO2b27KrIAxAMXLxBqJo//9TD9o9s7trVawYPDNZD20f14RbSChjBEEQBEEQBEEQBEEQxE2BiecnpHZ5AtAOpbZVXVdW94O8gRdA3hSZEJxnGedCZJU2ibUARqu8zitc2TGlFRjL35RmLe7aZFrQiw9KT61UwQItPitNiC6JFbgNJ2+lU1g1m05JrKDbcfJWPbIVDGrPKctUjmslq32njD9QnQIGbx7AEjNUMmDw5lghSoFe2TRThqoNmVFzpPBmFYxBM2q2GrBCtXm+pBo/CFWaxg9tUgWuvTlUSFKQH5BSLZJU+DzHO2p8bndg+JCWH5RHpJBS0EORUlhSd5xTzNxw9d1yn2JQBzvh7ej3PPvGwHTKRypHcrpnPhWaoiPfsoJzdDyl8NsM7nVUPgLmOreYSqE3ZIN9b99PFbAShFerZidWKkWFCrZrQYmqZkxvxEqhlhFegLFeWYOiQLuELq3MomA9wVWTrjo8aeWOv00twR1ysWxpxQYtlOA/CMW7nKVvhDAA02tnPU737Q1aMz9MJlI+vwnifwegNfkXmAvbpTC6IvzK90JdNBcdOytnShhcXdKXhCH7WmnWKi7IQ9tzTt6qil7rAHfSyZ/UTeRQwXDaycfKRJbqYkjFzkZtDKkmrpOsYkhFvpwGdUJJapIq7jh8IQWNXSkXV4qd3zvjr77grvGmVOSbPJQxpCLX0CCPIRX9RP4qu/tLFTt3OdRP+8wFFVBzevzq+L2j03lC9BxhQp6T4ll8pYO9xyUXNZMPNK8+OF1VAgX7tVX0/PwXuf1gccvpKiW2+4xy1enih4zl2iPYdXjsM28BDI8Dbe0JZa+vywIri/BocV70KHVZkGURVurgqiolWmebjbbeCxcXtR1Rq9cAee+m+vnKoAnFXZ/gCT8wmXeuKnxIxG9x3//MiocrDUtV4p/+/GGGsS+1bpyn0V3Zj3nLkv8rBN5Jq0MQBEEQBEEQBEEQBEGs8Q9UMiC2Cz0iwAAAAABJRU5ErkJggg=="/>
+            <span class="contributors-list-item-name">wissens</span>
+            <span class="contributors-list-item-quote">this is something the user would like to say</span>
+        </a>
+        <a class="contributors-list-item" href="https://github.com/Wissenss/Haruko" target="_blank">
+            <img class="contributors-list-item-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJQAAACUCAMAAABC4vDmAAAARVBMVEX6+vqPj4/////l5eWMjIyIiIj19fWCgoKVlZXGxsaYmJiSkpKxsbG3t7fp6eny8vKkpKS+vr7Nzc2qqqrf39/X19eenp7INw94AAAC6UlEQVR4nO2b27KrIAxAMXLxBqJo//9TD9o9s7trVawYPDNZD20f14RbSChjBEEQBEEQBEEQBEEQxE2BiecnpHZ5AtAOpbZVXVdW94O8gRdA3hSZEJxnGedCZJU2ibUARqu8zitc2TGlFRjL35RmLe7aZFrQiw9KT61UwQItPitNiC6JFbgNJ2+lU1g1m05JrKDbcfJWPbIVDGrPKctUjmslq32njD9QnQIGbx7AEjNUMmDw5lghSoFe2TRThqoNmVFzpPBmFYxBM2q2GrBCtXm+pBo/CFWaxg9tUgWuvTlUSFKQH5BSLZJU+DzHO2p8bndg+JCWH5RHpJBS0EORUlhSd5xTzNxw9d1yn2JQBzvh7ej3PPvGwHTKRypHcrpnPhWaoiPfsoJzdDyl8NsM7nVUPgLmOreYSqE3ZIN9b99PFbAShFerZidWKkWFCrZrQYmqZkxvxEqhlhFegLFeWYOiQLuELq3MomA9wVWTrjo8aeWOv00twR1ysWxpxQYtlOA/CMW7nKVvhDAA02tnPU737Q1aMz9MJlI+vwnifwegNfkXmAvbpTC6IvzK90JdNBcdOytnShhcXdKXhCH7WmnWKi7IQ9tzTt6qil7rAHfSyZ/UTeRQwXDaycfKRJbqYkjFzkZtDKkmrpOsYkhFvpwGdUJJapIq7jh8IQWNXSkXV4qd3zvjr77grvGmVOSbPJQxpCLX0CCPIRX9RP4qu/tLFTt3OdRP+8wFFVBzevzq+L2j03lC9BxhQp6T4ll8pYO9xyUXNZMPNK8+OF1VAgX7tVX0/PwXuf1gccvpKiW2+4xy1enih4zl2iPYdXjsM28BDI8Dbe0JZa+vywIri/BocV70KHVZkGURVurgqiolWmebjbbeCxcXtR1Rq9cAee+m+vnKoAnFXZ/gCT8wmXeuKnxIxG9x3//MiocrDUtV4p/+/GGGsS+1bpyn0V3Zj3nLkv8rBN5Jq0MQBEEQBEEQBEEQBEGs8Q9UMiC2Cz0iwAAAAABJRU5ErkJggg=="/>
+            <span class="contributors-list-item-name">wissens</span>
+            <span class="contributors-list-item-quote">this is something the user would like to say</span>
+        </a> 
+        
+        -->
+    </ul>
+  </main>
+
+
+  <script>
+
+    async function init()
+    {
+
+        let response = await fetch("https://api.github.com/repos/Wissenss/Haruko/contributors");
+        
+        let data = await response.json();
+        
+        data.forEach(c => {
+            // create the element
+            let item = document.createElement("a");
+            item.setAttribute("class", "contributors-list-item")
+            item.setAttribute("href", c.url);
+            item.setAttribute("target", "_blank");
+
+            let img = document.createElement("img");
+            img.setAttribute("class", "contributors-list-item-img");
+            img.setAttribute("src", c.avatar_url);
+            item.appendChild(img);
+            
+            let name = document.createElement("span");
+            name.setAttribute("class", "contributors-list-item-name");
+            name.innerHTML = c.login;
+            item.appendChild(name);
+
+            // todo: check about adding quotes
+            //let quote = document.createElement("span");
+            //quote.setAttribute("class", "contributors-list-item-quote");
+            //quote.innerHTML = "";
+            //item.appendChild(quote);
+
+            //item.innerHTML = c.login;
+
+            // append it to the list
+            let list = document.getElementById("contibutors-list")
+            
+            list.appendChild(item);
+        });
+    }
+
+    init();
+
+  </script>
+</body>
+</html>

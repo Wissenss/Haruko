@@ -7,29 +7,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg:           #FAFAF8;
-      --surface:      #FFFFFF;
-      --border:       #E5E4DF;
-      --border-hover: #C8C7C0;
-      --text-1:       #111110;
-      --text-2:       #706F6C;
-      --text-3:       #A3A29E;
-      --radius:       12px;
-      --radius-sm:    8px;
-    }
-
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text-1);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
 
     header {
       display: flex;
@@ -138,8 +117,8 @@
   </header>
 
   <main>
-    <p class="greeting">Welcome</p>
-    <h1 class="page-title">What do you want<br>to do today?</h1>
+    <p class="greeting">Hi,</p>
+    <h1 class="page-title">Here's what I can do</h1>
 
     <div class="card-grid">
       <a href="{{url_for('list_index')}}" class="nav-card">
@@ -150,6 +129,11 @@
       <a href="{{url_for('games_movie_plot')}}" class="nav-card">
         <span class="card-title">Guess the Movie</span>
         <span class="card-desc">Read a plot summary and identify the film.</span>
+        <span class="card-arrow">→</span>
+      </a>
+      <a href="{{url_for('contibutors_list')}}" class="nav-card">
+        <span class="card-title">Collaborators</span>
+        <span class="card-desc">Know the people that made Haruko possible.</span>
         <span class="card-arrow">→</span>
       </a>
     </div>

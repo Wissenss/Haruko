@@ -34,3 +34,34 @@ html, body
     font-size: 1rem;
   }
 }
+
+/* other general styling */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:           #FAFAF8;
+  --surface:      #FFFFFF;
+  --border:       #E5E4DF;
+  --border-hover: #C8C7C0;
+  --text-1:       #111110;
+  --text-2:       #706F6C;
+  --text-3:       #A3A29E;
+  --green:        #16A34A;
+  --green-bg:     #F0FDF4;
+  --green-border: #BBF7D0;
+  --red:          #DC2626;
+  --red-bg:       #FEF2F2;
+  --red-border:   #FECACA;
+  --radius:       12px;
+  --radius-sm:    8px;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text-1);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
