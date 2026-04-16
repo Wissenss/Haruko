@@ -239,6 +239,7 @@ def games_movie_plot():
     overview = re.sub("# #", "##", overview, flags=re.IGNORECASE)
 
   answer_movie_details["overview"] = overview 
+  answer_movie_details["overview_to_read"] = overview.replace('  ', '').replace('##', '').replace('  ', '').replace("##", "").replace('#', ' ... blank! ...').replace('<', '').replace('>', '').replace('&', '').replace("'", '').replace('"', '').replace('`', '')
 
   return render_template("guess_the_movie_plot.html", answer_md=answer_movie_details, choices_md=choices_movie_details, right_score=right_score, wrong_score=wrong_score)
 

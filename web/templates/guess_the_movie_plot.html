@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Lora:ital@1&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
   <style>
 
@@ -89,6 +90,10 @@
       border-radius: var(--radius);
       padding: 32px 36px;
       margin-bottom: 44px;
+
+      display: grid;
+      grid-template-rows: auto 20px;
+      grid-template-columns: auto 20px;
     }
 
     .plot-text {
@@ -98,6 +103,11 @@
       font-size: 19px;
       line-height: 1.75;
       color: var(--text-1);
+
+      grid-row-start: 1;
+      grid-row-end: 1;
+      grid-column-start: 1;
+      grid-column-end: 2;
     }
 
     /* ── Question heading ── */
@@ -107,6 +117,20 @@
       color: var(--text-2);
       margin-bottom: 20px;
       letter-spacing: -0.01em;
+    }
+
+    .read-plot-button {
+      background-color: var(--surface);
+      border: none;
+      grid-row-start: 2;
+      grid-row-end: 2;
+      grid-column-start: 2;
+      grid-column-end: 2;
+    }
+
+    .read-plot-button:hover {
+      cursor: pointer;
+      opacity: 0.8;
     }
 
     /* ── Movie grid ── */
@@ -292,6 +316,13 @@
 </head>
 <body>
 
+  <script>
+    function readPlot() {
+      const msg = new SpeechSynthesisUtterance("{{ answer_md["overview_to_read"] }}");
+      window.speechSynthesis.speak(msg)
+    }
+  </script>
+
   <header>
     <div class="nav-left">
       <a href="{{ url_for('index')}}" class="logo">Haruko</a>
@@ -305,6 +336,7 @@
     <p class="section-label">Plot</p>
     <div class="plot-card">
       <p class="plot-text">"{{ answer_md["overview"] }}"</p>
+      <button class="bi-volume-up read-plot-button" onclick="readPlot()"></button>
     </div>
 
     <p class="question-heading">Which movie is this from?</p>
