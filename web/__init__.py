@@ -131,12 +131,43 @@ def list_item_detail(list_id : int, id : int):
   if list_item.kind == constants.ListItemKind.MOVIE:
     url = f"https://www.omdbapi.com/?i={list_item.metadata_id}&apikey={environment.OMDB_KEY}"
 
+    print(f"url: {url}")
+
     response = requests.get(url)
 
-    if response.status_code != 200:
+    if response.status_code != 200: # not all errors other then 200 will be 502...
       return "<p>502: gateway timeout</p>"
 
     metadata = response.json()
+
+    # gotta find the id from the stored imdb id
+
+    response = requests.get(f"https://api.themoviedb.org/3/find/{list_item.metadata_id}?external_source=imdb_id&language=en-US", headers=TMDB_HEADERS)
+
+    if response.status_code != 200:
+      return f"<p>gateway error {response.status_code}</p>"
+    
+    # print(f"response id find: {response.json()}")
+
+    tmdb_id = response.json()["movie_results"][0]["id"]
+
+    # once we got it, we can query for the trailer video 
+
+    response = requests.get(f"https://api.themoviedb.org/3/movie/{tmdb_id}/videos", headers=TMDB_HEADERS)
+
+    if response.status_code != 200:
+      return f"<p>gateway error {response.status_code}</p>"
+
+    response = response.json()
+    
+    # print(f"response trailer find: {response}")
+
+    for r in response["results"]:
+      if "trailer" in str(r["type"]).lower() and "youtube" in str(r["site"].lower()):
+        metadata["trailer_link"] = f"https://youtube.com/embed/{r['key']}?autoplay=1&mute=1"
+        break
+
+  print(f"\n\n metadata: {metadata}")
 
   return render_template("list_item_detail.html", list=list, list_item=list_item, metadata=metadata)
 
