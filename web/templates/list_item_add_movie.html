@@ -308,17 +308,39 @@
     let _data = {};
     let _list_id = 0;
 
-
     function cancelEntry()
     {
       document.getElementById("select_dlg").close();
     }
 
-    function acceptEntry()
+    async function acceptEntry()
     {
+      data = _data;
+      list_id = _list_id;
+      
+      try
+      {
+        payload = {
+          list_id: list_id,
+          movie_tmdb_id: data.id
+        }
+        
+        response = await fetch("/api/list/item/add", {
+          method: "POST", 
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        })
 
+        console.log("response: ", response)
+      }
+      catch (error)
+      {
+        console.error("Hubo un problema con la petición:", error);
+      }
 
-      // window.location = `/list/${_list_id}`;
+      //window.location = `/list/${list_id}`;
     }
     
     function selectEntry(data, list_id)
@@ -381,7 +403,7 @@
 
       try
       {
-        const response = await fetch("/search/movie", {
+        const response = await fetch("/api/search/movie", {
           method: "POST", 
           headers: {
             "Content-Type": "application/json"

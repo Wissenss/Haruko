@@ -54,6 +54,10 @@ class TList:
     self.created_at = database.parse_db_date(record[7])
     self.updated_at = database.parse_db_date(record[8]) 
 
+class TUser:
+  def __init__(self):
+    self.id : int = 0
+
 class ListRepo:
   def __init__(self):
     pass
@@ -142,3 +146,49 @@ class ListRepo:
       lists.append(l)
 
     return lists
+
+  @classmethod
+  def get_list_users(cls, connection : sqlite3.Connection, list_id : int) -> List[TUser]:
+    cur = connection.cursor()
+
+    sql = "SELECT * FROM list_users WHERE list_id = ?"
+
+    cur.execute(sql, [list_id])
+
+    records = cur.fetchall()
+
+    user_list = []
+
+    for r in records:
+      user = TUser()
+
+      user.id = r[2]
+
+      user_list.append(user)
+
+    return user_list
+
+  @classmethod
+  def append_list_item(cls, connection : sqlite3.Connection, list_id : int, item : TListItem) -> int:
+    cur = connection.cursor()
+
+    sql = "SELECT MAX(position) FROM list_items WHERE list_id = ? AND is_archived = 0;"
+    
+    cur.execute(sql, [list_id])
+
+    row = cur.fetchone()
+
+    if row[0] == None:
+      next_position = 1
+    else:
+      next_position = row[0] + 1
+
+    sql = "INSERT INTO list_items(list_id, content, score, position, kind, metadata_id, is_archived, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, 0, datetime('now'), datetime('now'))"
+
+    cur.execute(sql, [list_id, item.content, item.score, next_position, item.kind.id, item.metadata_id])
+
+    item_id = cur.lastrowid
+    
+    connection.commit()
+
+    return item_id

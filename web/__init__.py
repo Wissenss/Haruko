@@ -214,8 +214,9 @@ def list_item_random(list_id : int):
 def list_item_add_movie(list_id : int):
   return render_template("list_item_add_movie.html", list_id=list_id)
 
-@app.route("/search/movie", methods=['POST'])
-def search_movie():
+@app.route("/api/search/movie", methods=['POST'])
+@requires_authorization
+def api_search_movie():
   print("search_movie endpoint reached")
 
   data = request.get_json()
@@ -224,7 +225,6 @@ def search_movie():
     return jsonify({"error": "Missing request body"}), 400
 
   query = data.get('query', '')
-
 
   url = urljoin("https://api.themoviedb.org", "3/search/movie")
 
@@ -241,9 +241,72 @@ def search_movie():
 
   return jsonify(response.json()), 200
 
-@app.route("list/item/add/api", methods=['POST'])
-def list_item_add_movie_api():
-  pass
+@app.route("/api/list/item/add", methods=['POST'])
+@requires_authorization
+def api_list_item_add_movie():
+  data = request.get_json()
+
+  list_id = data.get("list_id", 0)
+  movie_tmdb_id = data.get("movie_tmdb_id", 0) 
+
+  con = get_db()
+
+  # check list exists
+
+  list_info : domain.TList = domain.ListRepo.get_list_by_id(con, list_id)
+
+  if list_info == None:
+    return f"list \"{list_info.name}\" not found", 404
+
+  # check list is allowed for the user
+
+  allowed_user_list : List[domain.TUser] = domain.ListRepo.get_list_users(con, list_id)
+
+  user = discord.fetch_user()
+
+  is_allowed = False
+
+  for au in allowed_user_list:
+    if au.id == user.id:
+      is_allowed = True
+      break
+
+  if is_allowed == False:
+    return "Unauthorized", 401
+
+  # add the new item to the list...
+
+  #   go gotta translate the tmdb id to imdb id because that what we store in the db... TODO: refactor to allow for multiple sources of movie metadata
+
+  response = requests.get(f"https://api.themoviedb.org/3/movie/{movie_tmdb_id}/external_ids", headers=TMDB_HEADERS)
+  
+  if response.status_code != 200:
+    return f"gateway error {response.status_code}", 502
+
+  data = response.json()
+  print("response: ", data)
+
+  movie_imdb_id = data["imdb_id"]
+
+  #   query the metadata from imdb
+
+  response = requests.get(f"https://www.omdbapi.com/?i={movie_imdb_id}&apikey={environment.OMDB_KEY}")
+
+  if response.status_code != 200:
+    return "gateway error, movie metadata could not be obtained for the given resource", 502
+  
+  response = response.json()
+
+  item = domain.TListItem()
+
+  item.content = f"{response['Title']} ({response['Year']})"
+  item.score = 0
+  item.kind = constants.ListItemKind.MOVIE
+  item.metadata_id = movie_tmdb_id
+  
+  item_id = domain.ListRepo.append_list_item(con, list_id, item)
+
+  return jsonify({item_id: item_id, list_id: list_id}), 200
 
 @app.route("/games/guess-the-movie-plot")
 def games_movie_plot():

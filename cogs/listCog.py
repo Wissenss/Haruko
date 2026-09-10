@@ -89,28 +89,8 @@ class ListCog(CustomCog):
 
   def __append_item_to_list(self, list_id, item : TListItem):
     con = database.ConnectionPool.get()
-    cur = con.cursor()
-    
-    # calc next position
-    sql = "SELECT MAX(position) FROM list_items WHERE list_id = ? AND is_archived = 0;"
 
-    cur.execute(sql, [list_id])
-
-    row = cur.fetchone()
-
-    if row[0] == None:
-      next_position = 1
-    else:
-      next_position = row[0] + 1
-
-    # add item
-    sql = "INSERT INTO list_items(list_id, content, score, position, kind, metadata_id, is_archived, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, 0, datetime('now'), datetime('now'))"
-
-    cur.execute(sql, [list_id, item.content, item.score, next_position, item.kind.id, item.metadata_id])
-
-    item_id = cur.lastrowid
-    
-    con.commit()
+    item_id = ListRepo.append_list_item(list_id, item)
 
     database.ConnectionPool.release(con)
 
@@ -742,6 +722,45 @@ class ListCog(CustomCog):
       em.description = f"{list_name} is no longer shared with server {guild.name}"
       sql = "DELETE FROM list_guilds WHERE list_id=? AND discord_guild_id=?;"
       cur.execute(sql, [list_id, shared_discord_guild_id])
+
+    con.commit()
+
+    database.ConnectionPool.release(con)
+
+    return await interaction.response.send_message(embed=em, ephemeral=True)
+
+  @discord.app_commands.command(name="list_user_share")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  async def list_user_share(self, interaction : discord.Interaction, list_name : str, member : discord.Member):
+    em = discord.Embed(title="", description="")
+    
+    # find list id 
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
+
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    # if the list is not shared with this user already, share it, otherwhise unshare it
+    con = database.ConnectionPool.get()
+    cur = con.cursor()
+
+    sql = "SELECT * FROM list_users WHERE list_id = ?;"
+
+    cur.execute(sql, [list_id])
+
+    row = cur.fetchone()
+
+    if row == None: 
+      em.description = f"{list_name} is now shared with user {member.name}"
+
+      sql = "INSERT INTO list_users(list_id, discord_user_id) VALUES(?, ?);"
+      cur.execute(sql, [list_id, interaction.user.id])
+    
+    else:
+      em.description = f"{list_name} is no longer shared with user {member.name}"
+      sql = "DELETE FROM list_users WHERE list_id=? AND discord_user_id=?;"
+      cur.execute(sql, [list_id, member.id])
 
     con.commit()
 
