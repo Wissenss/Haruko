@@ -1,8 +1,11 @@
 from typing import List
 import io
+import os
 import random
 import re
+from urllib.parse import urljoin, urlencode
 from flask import Flask, g, render_template, url_for, redirect, request, send_file, jsonify
+from flask_discord import DiscordOAuth2Session, requires_authorization, Unauthorized
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -19,7 +22,18 @@ import requests
 
 app = Flask(__name__)
 
+app.secret_key = os.urandom(24) 
+
+app.config["DISCORD_CLIENT_ID"] = environment.DISCORD_OAUTH2_CLIENT_ID
+app.config["DISCORD_CLIENT_SECRET"] = environment.DISCORD_OAUTH2_CLIENT_SECRET
+app.config["DISCORD_REDIRECT_URI"] = environment.DISCORD_OAUTH2_REDIRECT_URI
+app.config["DISCORD_REDIRECT_URI_SCOPE"] = ["identify"]
+
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "true" 
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1) # In production we pass requests through ngix as a reverse proxy. And a lot of things break... This fixes them!
+
+discord = DiscordOAuth2Session(app)
 
 def get_db():
     if "db" not in g:
@@ -41,7 +55,12 @@ TMDB_HEADERS = {
 
 @app.route("/")
 def index():
-  return render_template("index.html")
+  user = None
+
+  if discord.authorized:
+    user = discord.fetch_user()
+  
+  return render_template("index.html", user=user)
 
 @app.route("/list")
 def list_index():
@@ -65,7 +84,12 @@ def list_detail(id : int):
 
   list_items : List[domain.TListItem] = domain.ListRepo.get_list_items_by_list_id(con, list.id)
 
-  return render_template("list_detail.html", list=list, list_items=list_items)
+  user = None
+
+  if discord.authorized:
+    user = discord.fetch_user()
+
+  return render_template("list_detail.html", list=list, list_items=list_items, user=user)
 
 @app.route("/list/<int:list_id>/export")
 def list_detail_export(list_id : int):
@@ -186,6 +210,41 @@ def list_item_random(list_id : int):
 
   return redirect(url_for('list_item_detail', list_id=list.id, id=item.id))
 
+@app.route("/list/<int:list_id>/item/add")
+def list_item_add_movie(list_id : int):
+  return render_template("list_item_add_movie.html", list_id=list_id)
+
+@app.route("/search/movie", methods=['POST'])
+def search_movie():
+  print("search_movie endpoint reached")
+
+  data = request.get_json()
+
+  if not data:
+    return jsonify({"error": "Missing request body"}), 400
+
+  query = data.get('query', '')
+
+
+  url = urljoin("https://api.themoviedb.org", "3/search/movie")
+
+  params = {
+    "query": query,
+    "include_adult": "true",
+    "language": "en-US",
+    "page": 1
+  }
+
+  url = f"{url}?{urlencode(params)}"
+
+  response = requests.get(url, headers=TMDB_HEADERS)
+
+  return jsonify(response.json()), 200
+
+@app.route("list/item/add/api", methods=['POST'])
+def list_item_add_movie_api():
+  pass
+
 @app.route("/games/guess-the-movie-plot")
 def games_movie_plot():
   
@@ -276,4 +335,22 @@ def games_movie_plot():
 
 @app.route("/contibutors")
 def contibutors_list():
-  return render_template("contributors.html");
+  return render_template("contributors.html")
+
+@app.route("/discord/login")
+def login():
+    return discord.create_session(scope=["identify"]) 
+
+@app.route("/discord/login/callback")
+def callback():
+    discord.callback()
+    return redirect(url_for("index"))
+
+@app.endpoint(Unauthorized)
+def redirect_unauthorized():
+    return redirect(url_for("login"))
+
+@app.route("/discord/login/credentials")
+def credentials():
+    user = discord.fetch_user()
+    return user.to_json()

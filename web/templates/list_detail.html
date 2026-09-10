@@ -86,12 +86,18 @@
       width: 100%;
     }
 
+    .page-title-container {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      margin-bottom: 32px;
+    }
+
     .page-title {
       font-size: 28px;
       font-weight: 500;
       letter-spacing: -0.03em;
       color: var(--text-1);
-      margin-bottom: 32px;
+      /* margin-bottom: 32px; */
       line-height: 1.2;
     }
 
@@ -240,11 +246,18 @@
     <div class="nav-actions">
       <a href="{{ url_for('list_item_random', list_id=list.id)}}" class="action-btn">Random</a>
       <a href="{{ url_for('list_detail_export', list_id=list.id)}}" class="action-btn">Export</a>
+      <a href="{{ url_for('login')}}" class="action-btn">Login</a>
     </div>
   </header>
 
   <main>
-    <h1 class="page-title">{{list.name}}</h1>
+    <div class="page-title-container">
+      <h1 class="page-title">{{list.name}}</h1>
+      
+      {% if user %}
+      <a href="{{ url_for('list_item_add_movie', list_id=list.id)}}" class="action-btn">Add Movie</a>
+      {% endif %}
+    </div>
 
     <ol class="items-list">
       {% set active_items = [] %}
