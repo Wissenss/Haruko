@@ -745,9 +745,9 @@ class ListCog(CustomCog):
     con = database.ConnectionPool.get()
     cur = con.cursor()
 
-    sql = "SELECT * FROM list_users WHERE list_id = ?;"
+    sql = "SELECT * FROM list_users WHERE list_id = ? and discord_user_id = ?;"
 
-    cur.execute(sql, [list_id])
+    cur.execute(sql, [list_id, member.id])
 
     row = cur.fetchone()
 
@@ -755,7 +755,7 @@ class ListCog(CustomCog):
       em.description = f"{list_name} is now shared with user {member.name}"
 
       sql = "INSERT INTO list_users(list_id, discord_user_id) VALUES(?, ?);"
-      cur.execute(sql, [list_id, interaction.user.id])
+      cur.execute(sql, [list_id, member.id])
     
     else:
       em.description = f"{list_name} is no longer shared with user {member.name}"
