@@ -68,7 +68,12 @@ def list_index():
 
   lists : List[domain.TList] = domain.ListRepo.get_public_lists(con)
 
-  return render_template("list_index.html", lists=lists)
+  user = None
+  
+  if discord.authorized:
+    user = discord.fetch_user()
+  
+  return render_template("list_index.html", lists=lists, user=user)
 
 @app.route("/list/<int:id>")
 def list_detail(id : int):
@@ -193,7 +198,12 @@ def list_item_detail(list_id : int, id : int):
 
   print(f"\n\n metadata: {metadata}")
 
-  return render_template("list_item_detail.html", list=list, list_item=list_item, metadata=metadata)
+  user = None
+  
+  if discord.authorized:
+    user = discord.fetch_user()
+
+  return render_template("list_item_detail.html", list=list, list_item=list_item, metadata=metadata, user=user)
 
 @app.route("/list/<int:list_id>/item/random")
 def list_item_random(list_id : int):
@@ -212,7 +222,12 @@ def list_item_random(list_id : int):
 
 @app.route("/list/<int:list_id>/item/add")
 def list_item_add_movie(list_id : int):
-  return render_template("list_item_add_movie.html", list_id=list_id)
+  user = None
+  
+  if discord.authorized:
+    user = discord.fetch_user()
+  
+  return render_template("list_item_add_movie.html", list_id=list_id, user=user)
 
 @app.route("/api/search/movie", methods=['POST'])
 @requires_authorization
@@ -302,7 +317,7 @@ def api_list_item_add_movie():
   item.content = f"{response['Title']} ({response['Year']})"
   item.score = 0
   item.kind = constants.ListItemKind.MOVIE
-  item.metadata_id = movie_tmdb_id
+  item.metadata_id = movie_imdb_id
   
   item_id = domain.ListRepo.append_list_item(con, list_id, item)
 
@@ -310,6 +325,11 @@ def api_list_item_add_movie():
 
 @app.route("/games/guess-the-movie-plot")
 def games_movie_plot():
+
+  user = None
+
+  if discord.authorized:
+    user = discord.fetch_user()
   
   right_score = int(request.args.get('rs', 0))
   wrong_score = int(request.args.get('ws', 0))
@@ -394,11 +414,16 @@ def games_movie_plot():
   answer_movie_details["overview"] = overview 
   answer_movie_details["overview_to_read"] = overview.replace('  ', '').replace('##', '').replace('  ', '').replace("##", "").replace('#', ' ... blank! ...').replace('<', '').replace('>', '').replace('&', '').replace("'", '').replace('"', '').replace('`', '')
 
-  return render_template("guess_the_movie_plot.html", answer_md=answer_movie_details, choices_md=choices_movie_details, right_score=right_score, wrong_score=wrong_score)
+  return render_template("guess_the_movie_plot.html", answer_md=answer_movie_details, choices_md=choices_movie_details, right_score=right_score, wrong_score=wrong_score, user=user)
 
 @app.route("/contibutors")
 def contibutors_list():
-  return render_template("contributors.html")
+  user = None
+  
+  if discord.authorized:
+    user = discord.fetch_user()
+
+  return render_template("contributors.html", user=user)
 
 @app.route("/discord/login")
 def login():

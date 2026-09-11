@@ -246,7 +246,11 @@
     <div class="nav-actions">
       <a href="{{ url_for('list_item_random', list_id=list.id)}}" class="action-btn">Random</a>
       <a href="{{ url_for('list_detail_export', list_id=list.id)}}" class="action-btn">Export</a>
-      <a href="{{ url_for('login')}}" class="action-btn">Login</a>
+      {% if user %}
+        <a href="#" class="action-btn">user: {{ user.name }}</a>
+      {% else %}
+        <a href="{{ url_for('login')}}" class="action-btn">Login</a>
+      {% endif %}
     </div>
   </header>
 

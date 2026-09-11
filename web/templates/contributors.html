@@ -41,6 +41,29 @@
 
     .nav-sep { color: var(--border); font-size: 18px; }
 
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 400;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-2);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 5px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.12s, color 0.12s;
+    }
+
     .nav-page {
       font-size: 13px;
       color: var(--text-2);
@@ -131,6 +154,13 @@
       <a href="{{ url_for('index')}}" class="logo">Haruko</a>
       <span class="nav-sep">›</span>
       <span class="nav-page">Contributors</span>
+    </div>
+    <div class="nav-actions">
+      {% if user %}
+        <a href="#" class="action-btn">user: {{ user.name }}</a>
+      {% else %}
+        <a href="{{ url_for('login')}}" class="action-btn">Login</a>
+      {% endif %}
     </div>
   </header>
 
