@@ -1,5 +1,6 @@
 import io
 import random
+import datetime
 
 from typing import Literal, Optional
 import discord
@@ -15,6 +16,11 @@ import environment
 from domain import ListRepo, TList, TListItem
 
 from cogs.customCog import CustomCog
+
+TMDB_HEADERS = {
+    "accept": "application/json",
+    "Authorization": f"Bearer {environment.TMDB_KEY}"
+}
 
 class ListCog(CustomCog):
   def __init__(self, bot):
@@ -223,6 +229,28 @@ class ListCog(CustomCog):
       em.description += f"**{item.content}**"
 
     return await interaction.response.send_message(embed=em, ephemeral=list_is_public==False)
+
+  async def __get_trailer_list_from_imdb_id(self, imdb_id):
+    response = requests.get(f"https://api.themoviedb.org/3/find/{imdb_id}?external_source=imdb_id&language=en-US", headers=TMDB_HEADERS)
+    
+    if response.status_code != 200:
+      return None
+        
+    tmdb_id = response.json()["movie_results"][0]["id"]
+    
+    response = requests.get(f"https://api.themoviedb.org/3/movie/{tmdb_id}/videos", headers=TMDB_HEADERS)
+    
+    if response.status_code != 200:
+      return None
+    
+    response = response.json()
+        
+    for r in response["results"]:
+      if "trailer" in str(r["type"]).lower() and "youtube" in str(r["site"].lower()):
+        trailer_link = f"https://www.youtube.com/watch?v={r['key']}"
+        break
+
+    return trailer_link
 
   @discord.app_commands.command(name="list_new")
   @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
@@ -884,7 +912,92 @@ class ListCog(CustomCog):
 
     con.commit()
 
+    database.ConnectionPool.release(con)
+
     return await self.__list_detail(interaction, list_name)
 
+  @discord.app_commands.command(name="movie_watch_event")
+  @discord.app_commands.guilds(constants.DEV_GUILD_ID, constants.KUVA_GUILD_ID, constants.THE_SERVER_GUILD_ID, constants.DEV2_GUILD_ID)
+  async def movie_watch_event(self, interaction : discord.Interaction, list_name :str, item_position : int, when_date : str, when_time : str):
+    em = discord.Embed(title="", description="")
+
+    list_id = self.__get_list_id_by_name(list_name, interaction.guild.id, interaction.user.id)
+    
+    if list_id == None:
+      em.description = f"No known list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    item_id = self.__get_item_id_by_position(list_id, item_position)
+    
+    if item_id == None:
+      em.description = f"No item with position {item_position} on list \"{list_name}\""
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    con = database.ConnectionPool.get()
+
+    item : TListItem = ListRepo.get_list_item_by_id(con, item_id)
+        
+    database.ConnectionPool.release(con)
+
+    title = random.choice([
+      "No prometemos que esté buena", 
+      "Master piece?",
+      "Peli chill",
+      "Todos calladitos",
+      "Ya tengo el torrent",
+      "Cinepolis",
+      "Cinemex",
+      "Apaga la luz",
+      "Traigan palomitas",
+      "Función especial",
+      "Noche de peli",
+      "Probablemente una basura?",
+      "Cine",
+      "Hay peli"
+      ])
+    em.add_field(name="Date", value=f"{when_date}", inline=True)
+    em.add_field(name="Time", value=f"{when_time}", inline=True)
+    em.add_field(name="Movie", value=f"{item.content}", inline=False)
+
+    if item.kind != constants.ListItemKind.MOVIE:
+      em.description = f"The chosen item is not a movie"
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    em.set_author(name=f"🍿 {title}", url=f"{environment.WEB_ADDR}/list/{list_id}/item/{item_id}")
+
+    url = f"https://www.omdbapi.com/?i={item.metadata_id}&apikey={environment.OMDB_KEY}"
+
+    response = requests.get(url)
+
+    if response.status_code != 200:
+      em.description = f"Movie matadata could not be retrieved"
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+
+    data = response.json()
+
+    if data['Poster'] != "N/A":
+      em.set_thumbnail(url=data['Poster'])
+
+    footer_text = ""
+
+    if data['Metascore'] != "N/A":
+      em.add_field(name="Metascore", value=f"{data['Metascore']}/100", inline=True)
+    if data['imdbRating'] != "N/A":
+      em.add_field(name="IMDB Rating", value=f"{data['imdbRating']}/10", inline=True)
+
+    if data['Runtime'] != "N/A":
+      em.add_field(name="Runtime", value=f"{data['Runtime']}", inline=False)
+
+    em.set_footer(text=footer_text)
+
+    trailer_link = await self.__get_trailer_list_from_imdb_id(item.metadata_id)
+
+    if not trailer_link:
+      em.description = f"Trailer link could not be retrieved"
+      return await interaction.response.send_message(embed=em, ephemeral=True)
+    
+    await interaction.response.send_message(embed=em, ephemeral=False)
+    await interaction.followup.send(trailer_link)
+    
 async def setup(bot):
     await bot.add_cog(ListCog(bot))
