@@ -1,6 +1,7 @@
 import io
 import random
 import datetime
+from datetime import timezone, timedelta
 
 from typing import Literal, Optional
 import discord
@@ -975,8 +976,11 @@ class ListCog(CustomCog):
 
     data = response.json()
 
+    poster_url = None
+
     if data['Poster'] != "N/A":
-      em.set_thumbnail(url=data['Poster'])
+      poster_url = data['Poster']
+      em.set_thumbnail(url=poster_url)
 
     footer_text = ""
 
@@ -985,8 +989,11 @@ class ListCog(CustomCog):
     if data['imdbRating'] != "N/A":
       em.add_field(name="IMDB Rating", value=f"{data['imdbRating']}/10", inline=True)
 
+    runtime = 120
+
     if data['Runtime'] != "N/A":
       em.add_field(name="Runtime", value=f"{data['Runtime']}", inline=False)
+      runtime = int(f"{data['Runtime']}".replace("min", "").strip())
 
     em.set_footer(text=footer_text)
 
@@ -995,9 +1002,31 @@ class ListCog(CustomCog):
     if not trailer_link:
       em.description = f"Trailer link could not be retrieved"
       return await interaction.response.send_message(embed=em, ephemeral=True)
-    
+
     await interaction.response.send_message(embed=em, ephemeral=False)
     await interaction.followup.send(trailer_link)
+
+    try:
+      start_datetime = datetime.datetime.strptime(f"{when_date} {when_time}", "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone(timedelta(hours=-6)))
+      end_datetime = start_datetime + timedelta(minutes=runtime) + timedelta(minutes=20)
+
+      map_guilds_voice_channels = {
+        constants.DEV_GUILD_ID: 1178465445171437721,
+        constants.KUVA_GUILD_ID: 873070087312142356,
+        constants.THE_SERVER_GUILD_ID: 1466248643421147177
+      }
+
+      event_title = f"{item.content}"
+      event_desc = f""
+
+      if interaction.guild.id in map_guilds_voice_channels.keys():
+        event_channel = interaction.guild.get_channel(map_guilds_voice_channels[interaction.guild.id])
+
+        await interaction.guild.create_scheduled_event(name=event_title, description=event_desc, start_time=start_datetime, end_time=end_datetime, entity_type=discord.EntityType.voice, channel=event_channel, privacy_level=discord.PrivacyLevel.guild_only)
+      else:
+        await interaction.guild.create_scheduled_event(name=event_title, description=event_desc, start_time=start_datetime, end_time=end_datetime, location="here", entity_type=discord.EntityType.external, privacy_level=discord.PrivacyLevel.guild_only)
+    except Exception as ex:
+      await interaction.followup.send(content=f"**Failed to create event.**\n**Reason**: {repr(ex)}", ephemeral=True)
     
 async def setup(bot):
     await bot.add_cog(ListCog(bot))
