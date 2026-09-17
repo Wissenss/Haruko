@@ -86,13 +86,15 @@ def list_detail(id : int):
 
   if list.is_public == False:
     return "<p>403: forbidden</p>"
-
-  list_items : List[domain.TListItem] = domain.ListRepo.get_list_items_by_list_id(con, list.id)
-
+  
   user = None
+  user_id = 0
 
   if discord.authorized:
     user = discord.fetch_user()
+    user_id = user.id
+
+  list_items : List[domain.TListItem] = domain.ListRepo.get_list_items_by_list_id(con, list.id, True, user_id)
 
   return render_template("list_detail.html", list=list, list_items=list_items, user=user)
 
@@ -322,6 +324,65 @@ def api_list_item_add_movie():
   item_id = domain.ListRepo.append_list_item(con, list_id, item)
 
   return jsonify({item_id: item_id, list_id: list_id}), 200
+
+@app.route("/api/list/item/vote", methods=["POST"])
+@requires_authorization
+def api_list_item_vote():
+  data = request.get_json()
+
+  list_id = data.get("list_id", 0)
+  item_id = data.get("item_id", 0)
+  vote_value = data.get("vote_value", 0)
+
+  if vote_value <= -1:
+    vote_value = -1
+  elif vote_value >= 1:
+    vote_value = 1
+  else:
+    vote_value = 0
+
+  user = discord.fetch_user()
+
+  con = get_db()
+  cur = con.cursor()
+
+  row = cur.execute("SELECT vote_value FROM list_item_votes WHERE list_item_id = ? AND discord_user_id = ?", [item_id, user.id]).fetchone()
+
+  if row:
+    vote_value = vote_value + row[0]
+
+  if vote_value <= -1:
+    vote_value = -1
+  elif vote_value >= 1:
+    vote_value = 1
+  else:
+    vote_value = 0
+
+  # delete previous votes (if any)
+  sql = "DELETE FROM list_item_votes WHERE list_item_id = ? AND discord_user_id = ?;"
+
+  cur.execute(sql, [item_id, user.id])
+
+  # update score count
+  sql = "INSERT INTO list_item_votes(list_item_id, discord_user_id, vote_value) VALUES(?, ?, ?);"
+
+  cur.execute(sql, [item_id, user.id, vote_value])
+
+  # obtain new count
+
+  sql = "SELECT SUM(vote_value) AS value FROM list_item_votes WHERE list_item_id = ?"
+
+  cur.execute(sql, [item_id])
+
+  vote_value = cur.fetchone()[0]
+
+  sql = "UPDATE list_items SET score = ? WHERE id = ?"
+
+  cur.execute(sql, [vote_value, item_id])
+
+  cur.connection.commit()
+
+  return jsonify({"user_vote_value": vote_value}), 200
 
 @app.route("/games/guess-the-movie-plot")
 def games_movie_plot():

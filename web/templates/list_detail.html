@@ -133,6 +133,33 @@
     white-space: nowrap;
     flex-shrink: 0;
   }
+
+  .item-list-item {
+    display: grid;
+    grid-template-rows: auto 4px auto;
+    grid-template-columns: 1fr auto;
+  }
+
+  .item-row {
+    grid-row: 1/4;
+    grid-column: 1;
+  }
+
+  .item-row-vote-btn {
+    margin-left: 5px;
+    padding: 2px;
+    width: 25px;
+  }
+
+  .item-row-up-btn {
+    grid-row: 1;
+    grid-column: 2;
+  }
+
+  .item-row-down-btn {
+    grid-row: 3;
+    grid-column: 2;
+  }
 {% endblock %}
 
 {% block breadcrumbs %}
@@ -166,15 +193,20 @@
 
     {% if active_items %}
       {% for item in active_items %}
-      <li>
+      <li class="item-list-item">
         <a href="{{ url_for('list_item_detail', list_id=list.id, id=item.id) }}" class="item-row">
           <span class="item-rank">{{loop.index}}</span>
-          <span class="item-name">{{ item.content }}</span>
-          <span class="item-score">{{ item.score }}</span>
+          <span id="item-name-id-{{item.id}}" class="item-name">{{ item.content }}</span>
+          <span id="item-score-id-{{item.id}}" class="item-score">{{ item.score }}</span>
         </a>
 
         {% if user %}
-        <button>Vote</button>
+          <button class="item-row-vote-btn item-row-up-btn" onclick="OnVoteClick({{list.id}}, {{item.id}}, 1);">
+            +
+          </button>
+          <button class="item-row-vote-btn item-row-down-btn" onclick="OnVoteClick({{list.id}}, {{item.id}}, -1);">
+            -
+          </button>
         {% endif %}
       </li>
       {% endfor %}
@@ -207,6 +239,38 @@
 
 {% block scripts %}
   <script>
+    async function OnVoteClick(list_id, item_id, value) {
+      try
+      {
+        payload = {
+          list_id: list_id,
+          item_id: item_id,
+          vote_value: value
+        }
+
+        response = await fetch("/api/list/item/vote", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        })
+
+        data = await response.json()
+
+        new_value = data.user_vote_value
+
+        el = document.getElementById(`item-score-id-${item_id}`)
+        el.textContent = new_value
+
+        console.log("response: ", response)
+      }
+      catch (error)
+      {
+        console.error("Hubo un problema con la petición:", error);
+      }
+    }
+
     document.querySelectorAll("time.utc-date").forEach(el => {
       const date = new Date(el.dateTime);
       if (isNaN(date)) return;

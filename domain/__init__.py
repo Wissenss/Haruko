@@ -19,6 +19,8 @@ class TListItem:
     self.created_at : datetime.datetime = None
     self.updated_at : datetime.datetime = None
 
+    self.user_vote_value : int = 0
+
   def map_from_record(self, record):
     self.id = record[0]
     self.list_id = record[1]
@@ -101,7 +103,7 @@ class ListRepo:
     return item
   
   @classmethod
-  def get_list_items_by_list_id(cls, connection : sqlite3.Connection, list_id : int, include_archived = True) -> List[TListItem]:
+  def get_list_items_by_list_id(cls, connection : sqlite3.Connection, list_id : int, include_archived = True, discord_user_id = 0) -> List[TListItem]:
     cur = connection.cursor()
 
     conditions = ""
@@ -109,9 +111,11 @@ class ListRepo:
     if include_archived == False:
       conditions += "AND is_archived == 0"
 
-    sql = f"SELECT * FROM list_items WHERE list_id = ? {conditions} ORDER BY score DESC, position ASC;"
+    sql = f"SELECT li.*, COALESCE(liv.vote_value, 0) AS user_vote_value FROM list_items li LEFT JOIN list_item_votes liv ON li.id = liv.list_item_id AND liv.discord_user_id = ? WHERE li.list_id = ? {conditions} ORDER BY li.score DESC, li.position ASC;"
 
-    cur.execute(sql, [list_id])
+    cur.execute(sql, [discord_user_id, list_id])
+
+    #print(f"discord_user_id: {discord_user_id}, list_id: {list_id}")
 
     records = cur.fetchall()
 
@@ -122,7 +126,11 @@ class ListRepo:
 
       i.map_from_record(r)
 
+      i.user_vote_value = r[11]
+
       items.append(i)
+
+      print(items)
 
     return items
   
