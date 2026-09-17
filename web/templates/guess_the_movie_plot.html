@@ -1,393 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Haruko — Guess The Movie</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+{% extends "layout.html" %}
+
+{% block title %}Haruko — Guess The Movie{% endblock %}
+
+{% block fonts %}
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Lora:ital@1&display=swap" rel="stylesheet"/>
+{% endblock %}
+
+{% block extra_head %}
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
-  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/shared.css') }}"/>
-  <style>
+{% endblock %}
 
-    /* ── Header ── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      height: 56px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
+{% block styles %}
+  .score-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-2);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-weight: 400;
+  }
 
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+  .score-badge span {
+    color: var(--text-1);
+    font-weight: 500;
+  }
 
-    .logo {
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--text-1);
-      text-decoration: none;
-    }
+  main {
+    max-width: 780px;
+    padding: 52px 24px 80px;
+  }
 
-    .nav-sep { color: var(--border); font-size: 18px; }
+  .section-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 14px;
+  }
 
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+  /* ── Plot card ── */
+  .plot-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px 36px;
+    margin-bottom: 44px;
 
-    .action-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 400;
-      font-family: 'DM Sans', sans-serif;
-      color: var(--text-2);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 5px 14px;
-      border-radius: 999px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: border-color 0.12s, color 0.12s;
-    }
+    display: grid;
+    grid-template-rows: auto 20px;
+    grid-template-columns: auto 20px;
+  }
 
-    .nav-page {
-      font-size: 13px;
-      color: var(--text-2);
-    }
+  .plot-text {
+    font-family: 'Lora', Georgia, serif;
+    font-style: italic;
+    font-weight: 300;
+    font-size: 19px;
+    line-height: 1.75;
+    color: var(--text-1);
 
-    .score-badge {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--text-2);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 5px 14px;
-      border-radius: 999px;
-      font-weight: 400;
-    }
+    grid-row-start: 1;
+    grid-row-end: 1;
+    grid-column-start: 1;
+    grid-column-end: 2;
+  }
 
-    .score-badge span {
-      color: var(--text-1);
-      font-weight: 500;
-    }
+  /* ── Question heading ── */
+  .question-heading {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 20px;
+    letter-spacing: -0.01em;
+  }
 
-    /* ── Main ── */
-    main {
-      flex: 1;
-      max-width: 780px;
-      margin: 0 auto;
-      padding: 52px 24px 80px;
-      width: 100%;
-    }
+  .read-plot-button {
+    background-color: var(--surface);
+    border: none;
+    grid-row-start: 2;
+    grid-row-end: 2;
+    grid-column-start: 2;
+    grid-column-end: 2;
+  }
 
-    .section-label {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--text-3);
-      margin-bottom: 14px;
-    }
+  .read-plot-button:hover {
+    cursor: pointer;
+    opacity: 0.8;
+  }
 
-    /* ── Plot card ── */
-    .plot-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px 36px;
-      margin-bottom: 44px;
+  /* ── Responsive ── */
+  @media (max-width: 480px) {
+    main { padding: 32px 16px 60px; }
+    .plot-card { padding: 24px 20px; }
+    .plot-text { font-size: 16px; }
+    .movie-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+{% endblock %}
 
-      display: grid;
-      grid-template-rows: auto 20px;
-      grid-template-columns: auto 20px;
-    }
+{% block breadcrumbs %}
+  <span class="nav-sep">›</span>
+  <span class="nav-page">Guess the Movie</span>
+{% endblock %}
 
-    .plot-text {
-      font-family: 'Lora', Georgia, serif;
-      font-style: italic;
-      font-weight: 300;
-      font-size: 19px;
-      line-height: 1.75;
-      color: var(--text-1);
+{% block nav_actions_extra %}
+  <div class="score-badge">Score <span>{{right_score}}</span></div>
+{% endblock %}
 
-      grid-row-start: 1;
-      grid-row-end: 1;
-      grid-column-start: 1;
-      grid-column-end: 2;
-    }
+{% block content %}
+  <p class="section-label">Plot</p>
+  <div class="plot-card">
+    <p class="plot-text">"{{ answer_md["overview"] }}"</p>
+    <button class="bi-volume-up read-plot-button" onclick="readPlot()"></button>
+  </div>
 
-    /* ── Question heading ── */
-    .question-heading {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text-2);
-      margin-bottom: 20px;
-      letter-spacing: -0.01em;
-    }
+  <p class="question-heading">Which movie is this from?</p>
 
-    .read-plot-button {
-      background-color: var(--surface);
-      border: none;
-      grid-row-start: 2;
-      grid-row-end: 2;
-      grid-column-start: 2;
-      grid-column-end: 2;
-    }
-
-    .read-plot-button:hover {
-      cursor: pointer;
-      opacity: 0.8;
-    }
-
-    /* ── Movie grid ── */
-    .movie-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-    }
-
-    .movie-card {
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      cursor: pointer;
-      transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
-      text-align: center;
-      padding-bottom: 16px;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-
-    .movie-card:hover {
-      border-color: var(--text-1);
-      transform: translateY(-3px);
-      box-shadow: 0 10px 28px rgba(0,0,0,0.08);
-    }
-
-    .movie-card:active {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
-
-    .movie-poster {
-      width: 100%;
-      aspect-ratio: 2/3;
-      object-fit: cover;
-      display: block;
-      background: var(--border);
-    }
-
-    .movie-info {
-      padding: 12px 12px 0;
-    }
-
-    .movie-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-1);
-      line-height: 1.35;
-      margin-bottom: 3px;
-    }
-
-    .movie-year {
-      font-size: 12px;
-      color: var(--text-3);
-    }
-
-    /* ── Dialogs ── */
-    dialog {
-      border: none;
-      border-radius: var(--radius);
-      padding: 0;
-      max-width: 380px;
-      width: calc(100% - 48px);
-      box-shadow: 0 24px 64px rgba(0,0,0,0.14);
-      outline: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      margin: 0;
-    }
-
-    dialog::backdrop {
-      background: rgba(17,17,16,0.45);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
-
-    .dialog-inner {
-      padding: 32px;
-    }
-
-    .dialog-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 4px 10px;
-      border-radius: 999px;
-      margin-bottom: 20px;
-    }
-
-    .dialog-tag.correct {
-      background: var(--green-bg);
-      color: var(--green);
-      border: 1px solid var(--green-border);
-    }
-
-    .dialog-tag.wrong {
-      background: var(--red-bg);
-      color: var(--red);
-      border: 1px solid var(--red-border);
-    }
-
-    .dialog-title {
-      font-size: 21px;
-      font-weight: 500;
-      letter-spacing: -0.03em;
-      margin-bottom: 8px;
-      color: var(--text-1);
-    }
-
-    .dialog-body {
-      font-size: 14px;
-      color: var(--text-2);
-      line-height: 1.6;
-      margin-bottom: 28px;
-    }
-
-    .dialog-body em {
-      color: var(--text-1);
-      font-style: italic;
-    }
-
-    .dialog-body .final-score {
-      display: block;
-      margin-top: 8px;
-      font-size: 24px;
-      font-weight: 500;
-      color: var(--text-1);
-      letter-spacing: -0.03em;
-    }
-
-    .dialog-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn {
-      flex: 1;
-      padding: 10px 16px;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 500;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      border: 1.5px solid var(--border);
-      background: var(--surface);
-      color: var(--text-1);
-      transition: background 0.12s, border-color 0.12s, opacity 0.12s;
-      letter-spacing: -0.01em;
-    }
-
-    .btn:hover {
-      border-color: var(--border-hover);
-      background: var(--bg);
-    }
-
-    .btn-primary {
-      background: var(--text-1);
-      color: #FAFAF8;
-      border-color: var(--text-1);
-    }
-
-    .btn-primary:hover {
-      opacity: 0.82;
-      background: var(--text-1);
-    }
-
-    /* ── Responsive ── */
-    @media (max-width: 480px) {
-      main { padding: 32px 16px 60px; }
-      .plot-card { padding: 24px 20px; }
-      .plot-text { font-size: 16px; }
-      .movie-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-  </style>
-</head>
-<body>
-
-  <script>
-    function readPlot() {
-      const msg = new SpeechSynthesisUtterance("{{ answer_md["overview_to_read"] }}");
-      window.speechSynthesis.speak(msg)
-    }
-  </script>
-
-  <header>
-    <div class="nav-left">
-      <a href="{{ url_for('index')}}" class="logo">Haruko</a>
-      <span class="nav-sep">›</span>
-      <span class="nav-page">Guess the Movie</span>
-    </div>
-    <div class="nav-actions">
-      <div class="score-badge">Score <span>{{right_score}}</span></div>
-      {% if user %}
-        <a href="#" class="action-btn">user: {{ user.name }}</a>
-      {% else %}
-        <a href="{{ url_for('login')}}" class="action-btn">Login</a>
-      {% endif %}
-    </div>
-  </header>
-
-  <main>
-    <p class="section-label">Plot</p>
-    <div class="plot-card">
-      <p class="plot-text">"{{ answer_md["overview"] }}"</p>
-      <button class="bi-volume-up read-plot-button" onclick="readPlot()"></button>
-    </div>
-
-    <p class="question-heading">Which movie is this from?</p>
-
-    <div class="movie-grid">
-      {% for c_md in choices_md %}
-      <div class="movie-card" onclick="choice({{c_md['id']}})">
-        <img
-          class="movie-poster"
-          src="https://image.tmdb.org/t/p/w200/{{c_md['poster_path']}}"
-          alt="{{ c_md['original_title'] }}"
-          loading="lazy"
-        />
-        <div class="movie-info">
-          <p class="movie-title">{{ c_md['original_title'] }}</p>
-          <p class="movie-year">{{c_md['release_date'][:4]}}</p>
-        </div>
+  <div class="movie-grid">
+    {% for c_md in choices_md %}
+    <div class="movie-card" onclick="choice({{c_md['id']}})">
+      <img
+        class="movie-poster"
+        src="https://image.tmdb.org/t/p/w200/{{c_md['poster_path']}}"
+        alt="{{ c_md['original_title'] }}"
+        loading="lazy"
+      />
+      <div class="movie-info">
+        <p class="movie-title">{{ c_md['original_title'] }}</p>
+        <p class="movie-year">{{c_md['release_date'][:4]}}</p>
       </div>
-      {% endfor %}
     </div>
-  </main>
+    {% endfor %}
+  </div>
 
   <!-- Correct dialog -->
   <dialog id="correct_dlg">
@@ -417,8 +165,15 @@
       </div>
     </div>
   </dialog>
+{% endblock %}
 
+{% block scripts %}
   <script>
+    function readPlot() {
+      const msg = new SpeechSynthesisUtterance("{{ answer_md["overview_to_read"] }}");
+      window.speechSynthesis.speak(msg)
+    }
+
     document.querySelectorAll('.plot-text').forEach(el => {
       el.textContent = el.textContent.replace(/#{2,}/g, '...');
     });
@@ -431,6 +186,4 @@
       }
     }
   </script>
-
-</body>
-</html>
+{% endblock %}
