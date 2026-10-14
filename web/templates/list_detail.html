@@ -67,6 +67,19 @@
     flex-shrink: 0;
   }
 
+  .item-available {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-3);
+    background: var(--green-bg);
+    border: 1px solid var(--border);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
   .empty-state {
     padding: 48px 0;
     text-align: center;
@@ -197,6 +210,9 @@
         <a href="{{ url_for('list_item_detail', list_id=list.id, id=item.id) }}" class="item-row">
           <span class="item-rank">{{loop.index}}</span>
           <span id="item-name-id-{{item.id}}" class="item-name">{{ item.content }}</span>
+          {% if item.available %}
+          <span class="item-available">✓</span>
+          {% endif %}
           <span id="item-score-id-{{item.id}}" class="item-score">{{ item.score }}</span>
         </a>
 
@@ -208,6 +224,7 @@
             -
           </button>
         {% endif %}
+
       </li>
       {% endfor %}
     {% else %}

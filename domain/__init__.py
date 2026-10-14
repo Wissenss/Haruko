@@ -21,6 +21,8 @@ class TListItem:
 
     self.user_vote_value : int = 0
 
+    self.available : bool = False
+
   def map_from_record(self, record):
     self.id = record[0]
     self.list_id = record[1]
@@ -33,6 +35,7 @@ class TListItem:
     self.archived_at = database.parse_db_date(record[8])
     self.created_at = database.parse_db_date(record[9])
     self.updated_at = database.parse_db_date(record[10]) 
+    self.available = record[11] != 0
 
 class TList:
   def __init__(self):
@@ -200,3 +203,21 @@ class ListRepo:
     connection.commit()
 
     return item_id
+
+  @classmethod
+  def update_items_available(cls, connection : sqlite3.Connection, available_items_imdb_ids : List[str]):
+    cur = connection.cursor()
+
+    sql = "UPDATE list_items SET available = 0 WHERE kind = ?"
+
+    cur.execute(sql, [constants.ListItemKind.MOVIE.id])
+
+    n = len(available_items_imdb_ids)
+
+    sql = "UPDATE list_items SET available = 1 WHERE kind = ? AND metadata_id IN ({seq})".format(seq=','.join(['?']*n))
+
+    params = [constants.ListItemKind.MOVIE.id] + available_items_imdb_ids
+
+    cur.execute(sql, params)
+
+    connection.commit()

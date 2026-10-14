@@ -503,3 +503,21 @@ def redirect_unauthorized():
 def credentials():
     user = discord.fetch_user()
     return user.to_json()
+
+@app.route("/api/items/available", methods=["POST"])
+def api_items_available():
+
+  print("api_items_available endpoint reached")
+
+  if request.args.get("apikey") != environment.WEB_APIKEY:
+    return jsonify("Unauthorized"), 401
+
+  data = request.get_json()
+
+  items_available = data.get("items_available", [])
+
+  con = get_db()
+
+  domain.ListRepo.update_items_available(con, items_available)
+
+  return jsonify("ok"), 200
