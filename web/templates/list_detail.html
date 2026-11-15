@@ -156,6 +156,7 @@
   .item-row {
     grid-row: 1/4;
     grid-column: 1;
+    min-width: 0px;
   }
 
   .item-row-vote-btn {
@@ -209,7 +210,7 @@
       <li class="item-list-item">
         <a href="{{ url_for('list_item_detail', list_id=list.id, id=item.id) }}" class="item-row">
           <span class="item-rank">{{loop.index}}</span>
-          <span id="item-name-id-{{item.id}}" class="item-name">{{ item.content }}</span>
+          <span id="item-name-id-{{item.id}}" class="item-name" style="text-overflow: ellipsis;">{{ item.content }}</span>
           {% if item.available %}
           <span class="item-available">✓</span>
           {% endif %}
