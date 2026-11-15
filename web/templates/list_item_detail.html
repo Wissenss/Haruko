@@ -112,11 +112,19 @@
         <img src="{{metadata['Poster']}}" alt="{{metadata['Title']}} poster"/>
       </div>
       <div class="movie-meta">
-        <h1 class="movie-title">{{metadata['Title']}}</h1>
+        <h1 class="movie-title">{{metadata['Title']}} ({{metadata['Year']}})</h1>
         <div class="meta-row">
           <span class="meta-label">Plot</span>
           <p class="plot-text">{{metadata['Plot']}}</p>
         </div>
+        <div class="meta-row">
+          <span class="meta-label">Director</span>
+          <p class="meta-value">{{metadata['Director']}}</p>
+        </div>
+        <!-- <div class="meta-row">
+          <span class="meta-label">Runtime</span>
+          <p class="meta-value">{{metadata['Runtime']}}</p>
+        </div> -->
       </div>
     </div>
   {% else %}
