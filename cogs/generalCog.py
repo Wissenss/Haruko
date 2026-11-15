@@ -1,3 +1,5 @@
+import datetime, time
+
 import discord
 import discord.ext
 import discord.ext.commands
@@ -9,12 +11,20 @@ class GeneralCog(CustomCog):
     def __init__(self, bot):
         super().__init__(bot)
 
+        self.wakeup_time : datetime = discord.utils.utcnow()
+
+    @discord.ext.commands.Cog.listener()
+    async def on_ready(self):
+        pass
+
     @discord.app_commands.command(name="ping")
     async def ping(self, interaction : discord.Interaction):
         em = discord.Embed(title="pong!", description="")
 
+        uptime = ( discord.utils.utcnow() - self.wakeup_time )
+
         em.description += f"\n**latency:**   {self.bot.latency * 1000:.0f} ms"
-        em.description += f"\n**uptime:**    "
+        em.description += f"\n**uptime:**    {uptime}"
         em.description += f"\n**pool size:** {database.ConnectionPool.get_pool_size()}" # ({database.ConnectionPool.get_pool_occupied_connections()} busy)
 
         return await interaction.response.send_message(embed=em)
